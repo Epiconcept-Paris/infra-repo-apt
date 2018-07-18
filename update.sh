@@ -1,4 +1,4 @@
 #!/bin/sh
 #
-#	update.sh - Update repository files after adding packages
+#	update.sh - Update repository control files after adding packages
 #
