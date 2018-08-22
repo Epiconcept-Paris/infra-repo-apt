@@ -20,6 +20,9 @@
   * code PHP d'une application
   * scripts utilitaires et cartographie propres à une nature de serveur (frontal, bdd, replication, etc...)
 
+* mini-framework de génération de paquets
+  * utilise des numéros de build comprenant la release debian. Ex: -2+deb9u1 -1+jessie8
+
 ## contraintes fonctionnelles
 
 * prévoir deux repositories : prod et preprod
