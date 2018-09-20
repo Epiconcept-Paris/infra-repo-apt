@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+#	Test container for APT
+#
+#	Usage:	bake
+#
+Prg=tools/`basename $0`
+Dir=`dirname $0`
+IniPwd=$PWD
+TopDir=../
+TstTop=
+
+Path() { realpath --relative-to=$IniPwd $1; }
+test "$Dir" || Dir=`dirname \`realpath $0\``
+expr "$Dir" : / >/dev/null && Dir=`Path $Dir`
+test "$Dir" = '.' || cd "$Dir"
+#   Script's CWD is where it is located, but all messages assume PWD is top-level
+Logs=${TstTop}logs
+Share=${TstTop}share
+
+#
+#   Check usage
+#
+if [ $# -ge 1 ]; then
+    echo "Usage: $Prg" >&2
+    exit 1
+fi
+
+User=`id -un`
+AddUser="groupadd -g `id -g` `id -gn`; useradd -u `id -u` -g `id -g` $User"
+
+#
+#   Build the image
+#
+APTST_BASE=epi-apt-test
+APTST_IMG=$APTST_BASE:stretch
+APTST_NAME=epi_apt_test
+date '+===== %Y-%m-%d %H:%M:%S %Z =================='
+Now=`date '+%s'`
+
+
+if docker ps | grep $APTST_NAME >/dev/null; then
+    echo "Stopping the running '$APTST_NAME' container..."
+    docker stop -t 5 $APTST_NAME >/dev/null
+    while docker ps | grep $APTST_NAME >/dev/null
+    do
+	sleep 1
+    done
+fi
+if docker ps -a | grep $APTST_NAME >/dev/null; then
+    echo "Deleting the existing '$APTST_NAME' container..."
+    docker rm $APTST_NAME >/dev/null
+fi
+if docker images | grep "$APTST_BASE *$DebVer" >/dev/null; then
+    echo "Deleting the existing '$APTST_IMG' image..."
+    docker rmi $APTST_IMG >/dev/null
+fi
+
+mkdir -p $Logs $Share
+test -f $Share/cfg || ln ${TstTop}cfg share
+echo "Building the '$APTST_IMG' image..."
+#   Variables come in order of their appearance in Dockerfile.in
+USER="$User" ADDUSER="$AddUser" envsubst '$USER $ADDUSER' <${TstTop}Dockerfile.in | tee $Logs/Dockerfile | docker build -f - -t $APTST_IMG . >$Logs/docker.out 2>&1
+
+#
+#   Run the container
+#
+Cmd="docker run -ti -v `realpath $Share`:/opt/share --name $APTST_NAME --rm $APTST_IMG"
+echo "Use:\n    $Cmd\nto run the APT test container"
+
+#
+#   End
+#
+date '+===== %Y-%m-%d %H:%M:%S %Z =================='
+End=`date '+%s'`
+Len=`expr $End - $Now`
+Min=`expr $Len / 60`
+Sec=`expr $Len - '(' $Min '*' 60 ')'`
+printf "Duration: %d:%02d\n" $Min $Sec

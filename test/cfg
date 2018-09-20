@@ -1,0 +1,9 @@
+#
+#	cfg - Configure APT test
+#	Called as . /opt/share/cfg from container's root/.bashrc
+#
+Host='host.mydomain.tld'
+File='/etc/hosts'
+grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
+File='/etc/apt/sources.list'
+grep "$Host" $File >/dev/null || echo "deb http://$Host/apt stable custom" >>$File
