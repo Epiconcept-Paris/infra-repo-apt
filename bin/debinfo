@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+#	debinfo - Show metadata information on Debian package files
+#
+Prg=`basename $0`
+if [ $# -gt 0 ]; then
+    echo "Name|Vers|Arch|Sect|Prio|File|Link|Inod|Size|Prov|Deps"
+else
+    echo "Usage: $Prg <.deb-file> [<.deb-file> ...]" >&2
+    exit 1
+fi
+for f in "$@"
+do
+    test -f "$f" || continue
+    eval `stat -c "l=%h s=%s i=%i" "$f"`
+    dpkg-deb -W --showformat "\${Package}|\${Version}|\${Architecture}|\${Section}|\${Priority}|$f|$l|$i|$s|\${Provides}|\${Depends}\\n" $f
+done
