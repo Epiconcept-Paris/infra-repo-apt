@@ -25,10 +25,11 @@
 
 ## contraintes fonctionnelles
 
-* prévoir deux repositories : prod et preprod
-  * les paquets arrivent dans le repo preprod
+* prévoir deux repositories : prod et preprod (prep)
+  * les paquets arrivent dans un certain nombre de sources répertoriées (build, travis, epi-php, autre à venir)
+  * le script update.sh (evolution de apt_deploy.sh) est invoqué (par une URL http) à chaque changement dans les sources et reconstruit le répertoire preprod
   * une opération (cli) permet de lister les paquets qui sont en preprod et pas encore en production
-  * une autre opération (cli) permet de copier le fichier vers le repo de prod
+  * une autre opération (cli) permet de montrer le fichier dans le repo de prod ou de le retirer
   * les urls auront apt.epiconcept.fr pour base, le reste est libre (ou chaque repo aura son propre virtualhost si c'est nécessaire, genre apt-prod et apt-preprod)
 
 * permettre de garder plusieurs versions pour chaque paquet, et qu'elles soient toutes installables (pour assurer le rollback en cas de problème avec la nouvelle version)
