@@ -13,6 +13,6 @@ RUN apt-get update
 RUN apt-get upgrade -y
 
 # Tools and build deps
-RUN apt-get install -y --no-install-recommends vim file net-tools curl
+RUN apt-get install -y --no-install-recommends vim file net-tools curl gnupg
 
 CMD [ "/bin/bash" ]

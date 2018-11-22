@@ -7,3 +7,6 @@ File='/etc/hosts'
 grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
 File='/etc/apt/sources.list'
 grep "$Host" $File >/dev/null || echo "deb http://$Host/apt stable custom" >>$File
+echo -n "Adding APT key: "
+curl -fsSL http://$Host/apt/key.gpg | apt-key add -
+echo -e "Use:\n\tapt-key list\nto list APT trusted keys"
