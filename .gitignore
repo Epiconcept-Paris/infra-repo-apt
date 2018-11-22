@@ -1,4 +1,6 @@
-test/logs
-test/share
 gpg/key.gpg
+site/sources
+site/docroot
+test/share
+test/logs
 work
