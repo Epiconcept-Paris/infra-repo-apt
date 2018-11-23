@@ -1,17 +1,164 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 #	debinfo - Show metadata information on Debian package files
 #
 Prg=`basename $0`
-if [ $# -gt 0 ]; then
-    echo "Name|Vers|Arch|Sect|Prio|File|Link|Inod|Size|Prov|Deps"
-else
-    echo "Usage: $Prg <.deb-file> [<.deb-file> ...]" >&2
-    exit 1
-fi
-for f in "$@"
+
+# We use bash arrays
+Hdrx=(Path File Size Links Inod MD5 SHA1 SHA256)
+Hlpx=(Filepath Filename FileSize Hardlinks Inode MD5sum SHA1sum SHA256sum)
+nHx=${#Hdrx[*]}
+Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Desc Maint Home Source Instsz Confl Break Prov Predeps Deps)
+Fmts=([$nHx]=Package Version Architecture Section Priority Origin Description Maintainer Homepage Source Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
+# omited: Recommends Replaces Suggests
+Abrs=(F f z h i m 1 2 n v a s p o c M H S Z C B P D d)
+declare -A StFs
+StFs=([z]=s [h]=h [i]=i)
+Format="%n	%v	%a\n"
+Sep='	'
+
+#   Usasge [<exit-code>]
+Usage()
+{
+    echo "Display debian package(s) control fields" >&2
+    echo -e "Usage:\t$Prg [-f format-string | -a] [-r] [-s separator] [package-file ...]" >&2
+    echo -e "\t-a sets format-string to display all existing fields" >&2
+    echo -e "\t-r suppresses the header" >&2
+    echo -e "\t$Prg -H will list %<x> format specifiers" >&2
+    echo "If no package-file is specified, installed packages will be displayed"
+    exit $1
+}
+
+#   FmtHelp
+FmtHelp()
+{
+    echo "Format specifiers:"
+    echo "  Package files only:"
+    for idx in "${!Hdrx[@]}"
+    do
+	echo "    %${Abrs[$idx]}  ${Hlpx[$idx]}"
+    done
+    echo "  Files and installed packages:"
+    for idx in "${!Hdrs[@]}"
+    do
+	echo "    %${Abrs[$idx]}  ${Fmts[$idx]}"
+    done
+    return;
+}
+
+#   Index <array> <value>
+Index()
+{
+    local idx
+    local -n a=$1
+
+    for idx in "${!a[@]}"
+    do
+	test "${a[$idx]}" = "$2" && { echo $idx; return; }
+    done
+    echo -1
+}
+
+#   sums file fs...
+sums()
+{
+    local file fmt fs
+
+    file="$1"
+    shift
+    fmt=
+    for fs in "$@"
+    do
+	case $fs in
+	    m)	set `md5sum "$file"`;;
+	    1)	set `sha1sum "$file"`;;
+	    2)	set `sha256sum "$file"`;;
+	esac
+	fmt="$fmt -e s/%$fs/$1/g"
+    done
+    echo "$fmt"
+}
+
+# Main
+#   Parse args
+while getopts 'af:hrs:H' opt
 do
-    test -f "$f" || continue
-    eval `stat -c "l=%h s=%s i=%i" "$f"`
-    dpkg-deb -W --showformat "\${Package}|\${Version}|\${Architecture}|\${Section}|\${Priority}|$f|$l|$i|$s|\${Provides}|\${Depends}\\n" $f
+    case $opt in
+	f)  Format="$OPTARG"	;;
+	s)  Sep="$OPTARG"	;;
+	a)  fmtAll=y;;
+	r)  noHdr=y;;
+	H)  FmtHelp; exit 0;;
+	h)  Usage 0;;	# help
+	\?) Usage 1;;	# error
+    esac
 done
+shift `expr $OPTIND - 1`
+test $# -gt 0 && onFiles=y
+
+#   Assemble -a Format
+if [ "$fmtAll" ]; then
+    Format=
+    s=
+    if [ "$onFiles" ]; then
+	for idx in "${!Hdrx[@]}"
+	do
+	    test $idx -eq 0 && continue
+	    Format="$Format$s%${Abrs[$idx]}"
+	    s="$Sep"
+	done
+    fi
+    for idx in "${!Hdrs[@]}"
+    do
+	Format="$Format$s%${Abrs[$idx]}"
+	s="$Sep"
+    done
+    Format="$Format\\n"
+fi
+
+# Check format specifiers
+sedHdrs=" -e s/\\\\n/\
+/g"
+sedFmts=" -e s/\\\\n//g"
+for fs in `echo "$Format" | sed -nr 's/[^%]*%(.)[^%]*/\1 /pg'`
+do
+    idx=`Index Abrs $fs`
+    if [ $idx -ge 0 ]; then
+	if [ $idx -lt $nHx ]; then
+	    if [ "$onFiles" ]; then
+		sedHdrs=" $sedHdrs -e s/%$fs/${Hdrx[$idx]}/g"
+		test $idx -eq 0 && doPath=y
+		test $idx -eq 1 && doFile=y
+		test $idx -ge 2 -a $idx -le 4 && statFmt="$statFmt -e s/%%$fs/%${StFs[$fs]}/g"
+		test $idx -ge 5 -a $idx -lt $nHx && sumsOpt="$sumsOpt$fs "
+	    else
+		echo "$Prg: ignoring %$fs file specifier" >&2
+	    fi
+	else
+	    sedHdrs=" $sedHdrs -e s/%$fs/${Hdrs[$idx]}/g"
+	    sedFmts=" $sedFmts -e s/%$fs/\${${Fmts[$idx]}}/g"
+	fi
+    else
+	echo "$Prg: ignoring unknown %$fs specifier" >&2
+    fi
+done
+
+#   All set: display them !
+test "$noHdr" || echo "$Format" | sed$sedHdrs
+if [ "$onFiles" ]; then	# Some .deb args, display info on them
+    for path in "$@"
+    do
+	test -f "$path" || { echo "File $path not found" >&2; continue; }
+	file=`basename $path`
+	sedFmtx=
+	test "$doPath" && sedFmtx="$sedFmtx -e s;%${Abrs[0]};$path;g"
+	test "$doFile" && sedFmtx="$sedFmtx -e s;%${Abrs[1]};$file;g"
+	test "$statFmt" && sedFmtx="$sedFmtx`stat -c "$statFmt" "$path"`"
+	test "$sumsOpt" && sedFmtx="$sedFmtx`sums "$path" $sumsOpt`"
+	Fmt=`echo "$Format" | sed$sedFmtx$sedFmts`
+	dpkg-deb -W --showformat "$Fmt" "$path" | tr '\n\f' '\v\n'
+    done
+else			# else display info on installed packages
+    Fmt=`echo "$Format" | sed$sedFmts`
+    dpkg-query -W -f "$Fmt" | tr '\n\f' '\v\n'
+fi
