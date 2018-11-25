@@ -22,7 +22,7 @@ Usage()
 {
     echo "Display debian package(s) control fields" >&2
     echo -e "Usage:\t$Prg [-f format-string | -a] [-r] [-s separator] [package-file ...]" >&2
-    echo -e "\t-a sets format-string to display all existing fields" >&2
+    echo -e "\t-a sets format-string to display all existing fields (except Path)" >&2
     echo -e "\t-r suppresses the header" >&2
     echo -e "\t$Prg -H will list %<x> format specifiers" >&2
     echo "If no package-file is specified, installed packages will be displayed"
@@ -103,7 +103,7 @@ if [ "$fmtAll" ]; then
     if [ "$onFiles" ]; then
 	for idx in "${!Hdrx[@]}"
 	do
-	    test $idx -eq 0 && continue
+	    test ${Abrs[$idx]} = 'F' && continue
 	    Format="$Format$s%${Abrs[$idx]}"
 	    s="$Sep"
 	done
