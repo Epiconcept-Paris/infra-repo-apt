@@ -1,6 +1,7 @@
 gpg/key.gpg
 site/sources
 site/docroot
+site/tmp
 test/share
 test/logs
 work
