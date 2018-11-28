@@ -1,0 +1,8 @@
+APT::FTPArchive::Release {
+    Origin          "Epiconcept";
+    Label           "Epiconcept %ORIG% repository";
+    Suite:	    "stable";
+    Codename        "%DIST%";
+    Components      "%COMPO%";
+    Architectures   "%ARCHS%";
+}

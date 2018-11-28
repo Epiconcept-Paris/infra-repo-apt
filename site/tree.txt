@@ -59,18 +59,18 @@
 │   │   │   │   │       └── Packages
 │   │   │   │   ├── Release
 │   │   │   │   └── Release.gpg
-│   │   │   ├── precise -> wheezy
-│   │   │   ├── quantal -> wheezy
-│   │   │   ├── raring  -> wheezy
-│   │   │   ├── saucy   -> wheezy
-│   │   │   ├── trusty  -> jessie
-│   │   │   ├── utopic  -> jessie
-│   │   │   ├── vivid   -> jessie
-│   │   │   ├── wily    -> jessie
-│   │   │   ├── xenial  -> stretch
-│   │   │   ├── yakkety -> stretch
-│   │   │   ├── zesty   -> stretch
-│   │   │   └── artful  -> stretch
+│   │   │   ├── precise = wheezy
+│   │   │   ├── quantal = wheezy
+│   │   │   ├── raring  = wheezy
+│   │   │   ├── saucy   = wheezy
+│   │   │   ├── trusty  = jessie
+│   │   │   ├── utopic  = jessie
+│   │   │   ├── vivid   = jessie
+│   │   │   ├── wily    = jessie
+│   │   │   ├── xenial  = stretch
+│   │   │   ├── yakkety = stretch
+│   │   │   ├── zesty   = stretch
+│   │   │   └── artful  = stretch
 │   │   └── key.gpg
 │   └── prod
 │       ├── debs
