@@ -1,6 +1,6 @@
-gpg/key.gpg
 site/sources
 site/docroot
+site/gpg/key.gpg
 site/tmp
 test/share
 test/logs
