@@ -3,10 +3,11 @@
 #	Called as . /opt/share/cfg from container's root/.bashrc
 #
 Host='host.mydomain.tld'
+Repo="http://$Host/apt/prep"
 File='/etc/hosts'
 grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
 File='/etc/apt/sources.list'
-grep "$Host" $File >/dev/null || echo "deb http://$Host/apt stable custom" >>$File
+grep "$Host" $File >/dev/null || echo "deb $Repo stretch main" >>$File
 echo -n "Adding APT key: "
-curl -fsSL http://$Host/apt/key.gpg | apt-key add -
+curl -fsSL "$Repo/key.gpg" | apt-key add -
 echo -e "Use:\n\tapt-key list\nto list APT trusted keys"
