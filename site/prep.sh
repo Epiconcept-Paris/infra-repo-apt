@@ -40,6 +40,7 @@ fi
 #
 #   update
 #
+exec 2>>log
 Cmd="find $SrcDir -type f -name '*.deb'"
 if [ `eval $Cmd -links 1 | wc -l` -eq 0 ]; then	# Just exit if nothing to add
     echo "No new packages found."
@@ -47,9 +48,10 @@ if [ `eval $Cmd -links 1 | wc -l` -eq 0 ]; then	# Just exit if nothing to add
 fi
 
 # Link new packages to prep/
-# Generate the override files
 mkdir -p $TmpDir
+date "+---- %Y-%m-%d %H:%M:%S ---------------------------------------------------" >&2
 eval $Cmd >$TmpDir/deblist
+echo "Adding files to $RepDir ..."
 while read deb
 do
     File=`basename $deb`
@@ -82,7 +84,9 @@ do
 	    fi
 	    continue
 	fi
-	ln $deb $ArchDir    
+	Pkg=${Name}_${Vers}_$Arch.deb
+	test $File = $Pkg || echo "Warning: `expr $deb : "$SrcDir/\(.*\)"` -> $DebVer/$Arch/$Pkg" >&2
+	ln $deb $ArchDir/$Pkg
     fi
 done <$TmpDir/deblist
 rm $TmpDir/deblist

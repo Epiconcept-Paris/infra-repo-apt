@@ -1,6 +1,6 @@
 ├── config
 │   ├── dists
-│   └── alias
+│   └── relconf
 ├── sources
 │   ├── builds
 │   │   └── *.deb
@@ -26,11 +26,9 @@
 │   │   │   ├── wheezy
 │   │   │   │   ├── main
 │   │   │   │   │   ├── binary-all
-│   │   │   │   │   │   ├── Packages.xz
 │   │   │   │   │   │   ├── Packages.gz
 │   │   │   │   │   │   └── Packages
 │   │   │   │   │   └── binary-amd64
-│   │   │   │   │       ├── Packages.xz
 │   │   │   │   │       ├── Packages.gz
 │   │   │   │   │       └── Packages
 │   │   │   │   ├── Release
@@ -38,11 +36,9 @@
 │   │   │   ├── jessie
 │   │   │   │   ├── main
 │   │   │   │   │   ├── binary-all
-│   │   │   │   │   │   ├── Packages.xz
 │   │   │   │   │   │   ├── Packages.gz
 │   │   │   │   │   │   └── Packages
 │   │   │   │   │   └── binary-amd64
-│   │   │   │   │       ├── Packages.xz
 │   │   │   │   │       ├── Packages.gz
 │   │   │   │   │       └── Packages
 │   │   │   │   ├── Release
@@ -50,11 +46,9 @@
 │   │   │   ├── stretch
 │   │   │   │   ├── main
 │   │   │   │   │   ├── binary-all
-│   │   │   │   │   │   ├── Packages.xz
 │   │   │   │   │   │   ├── Packages.gz
 │   │   │   │   │   │   └── Packages
 │   │   │   │   │   └── binary-amd64
-│   │   │   │   │       ├── Packages.xz
 │   │   │   │   │       ├── Packages.gz
 │   │   │   │   │       └── Packages
 │   │   │   │   ├── Release
@@ -86,11 +80,9 @@
 │       │   ├── wheezy
 │       │   │   ├── main
 │       │   │   │   ├── binary-all
-│       │   │   │   │   ├── Packages.xz
 │       │   │   │   │   ├── Packages.gz
 │       │   │   │   │   └── Packages
 │       │   │   │   └── binary-amd64
-│       │   │   │       ├── Packages.xz
 │       │   │   │       ├── Packages.gz
 │       │   │   │       └── Packages
 │       │   │   ├── Release
@@ -98,11 +90,9 @@
 │       │   ├── jessie
 │       │   │   ├── main
 │       │   │   │   ├── binary-all
-│       │   │   │   │   ├── Packages.xz
 │       │   │   │   │   ├── Packages.gz
 │       │   │   │   │   └── Packages
 │       │   │   │   └── binary-amd64
-│       │   │   │       ├── Packages.xz
 │       │   │   │       ├── Packages.gz
 │       │   │   │       └── Packages
 │       │   │   ├── Release
@@ -110,31 +100,29 @@
 │       │   ├── stretch
 │       │   │   ├── main
 │       │   │   │   ├── binary-all
-│       │   │   │   │   ├── Packages.xz
 │       │   │   │   │   ├── Packages.gz
 │       │   │   │   │   └── Packages
 │       │   │   │   └── binary-amd64
-│       │   │   │       ├── Packages.xz
 │       │   │   │       ├── Packages.gz
 │       │   │   │       └── Packages
 │       │   │   ├── Release
 │       │   │   └── Release.gpg
-│       │   ├── precise -> wheezy
-│       │   ├── quantal -> wheezy
-│       │   ├── raring  -> wheezy
-│       │   ├── saucy   -> wheezy
-│       │   ├── trusty  -> jessie
-│       │   ├── utopic  -> jessie
-│       │   ├── vivid   -> jessie
-│       │   ├── wily    -> jessie
-│       │   ├── xenial  -> stretch
-│       │   ├── yakkety -> stretch
-│       │   ├── zesty   -> stretch
-│       │   └── artful  -> stretch
+│       │   ├── precise = wheezy
+│       │   ├── quantal = wheezy
+│       │   ├── raring  = wheezy
+│       │   ├── saucy   = wheezy
+│       │   ├── trusty  = jessie
+│       │   ├── utopic  = jessie
+│       │   ├── vivid   = jessie
+│       │   ├── wily    = jessie
+│       │   ├── xenial  = stretch
+│       │   ├── yakkety = stretch
+│       │   ├── zesty   = stretch
+│       │   └── artful  = stretch
 │       └── key.gpg
 ├── tmp
-│   ├── over
-│   └── conf
+│   ├── deblist
+│   └── relconf
 ├── prep.sh
 ├── prod.sh
 └── log

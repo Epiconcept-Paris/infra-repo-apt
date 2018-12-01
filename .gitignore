@@ -2,6 +2,7 @@ site/sources
 site/docroot
 site/gpg/key.gpg
 site/tmp
+site/log
 test/share
 test/logs
 work

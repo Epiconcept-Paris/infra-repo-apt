@@ -32,18 +32,20 @@ umask 002
 # Generate Packages files
 for DebArch in `ls -d $RepDir/debs/*/*`
 do
-    #ls $DebArch/*.deb | sed -e "s;^$DebArch/;;" -e 's/.deb$/ optional base/' -e 's/_all//' -e 's/_[0-9]* / /' | sort -u >$DebArch/override
     echo "Generating $DebArch/override"
     for deb in $DebArch/*.deb
     do
         dpkg-deb -W --showformat '${Package} optional base\n' $deb 2>/dev/null
     done | sort -u >$DebArch/override
     echo "Processing $DebArch ..."
-    dpkg-scanpackages -m $DebArch $DebArch/override >$DebArch/Packages
+    ArchDir=`expr $DebArch : "$RepDir/\(.*\)"`
+    (cd $RepDir; dpkg-scanpackages -m $ArchDir $ArchDir/override >$ArchDir/Packages)
     rm $DebArch/override
 done
 
 # Make dists directories
+Mail="`sed -n 's/^Name-Email: //p' $GpgDir/key.conf`"
+Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
 while read Dist BinDir
 do
     echo "Updating '$Dist' distribution"
@@ -68,14 +70,13 @@ do
     for ArchDir in $CompDir/binary-*
     do
 	gzip -9 <$ArchDir/Packages >$ArchDir/Packages.gz
-	xz <$ArchDir/Packages >$ArchDir/Packages.xz
 	Archs="$Archs$sep`expr $ArchDir : "$CompDir/binary-\(.*\)"`"
 	sep=' '
     done
     test "`basename $RepDir`" = 'prod' && Orig='production' || Orig='pre-prod'
-    sed -e "s/%ORIG%/$Orig/" -e "s/%DIST%/$Dist/" -e "s/%COMPO%/$Archs/" -e "s/%ARCHS%/$Compo/" $CfgDir/relconf >$TmpDir/relconf
+    sed -e "s/%ORIG%/$Orig/" -e "s/%DIST%/$Dist/" -e "s/%COMPO%/$Compo/" -e "s/%ARCHS%/$Archs/" $CfgDir/relconf >$TmpDir/relconf
     apt-ftparchive -c $TmpDir/relconf release $DistDir/ >$DistDir/Release
-    sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg --sign --passphrase-fd 0 --batch -ab -o Release.gpg Release)
+    sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --batch -o Release.gpg Release)
 done <$CfgDir/dists
 ln $GpgDir/key.gpg $RepDir
-
+rm $TmpDir/relconf
