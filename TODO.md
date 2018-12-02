@@ -1,4 +1,4 @@
-Pb fichiers supprimés dans sources -> propager
+x Pb fichiers supprimés dans sources -> propager
 x Pb noms packages en Maj EPIFILES etc
 x Incohérences des sources : dups, bad pkgnames, old files, etc... ?
     ~ selectionner en amont, x renommer dans prep/prod, x eliminer
