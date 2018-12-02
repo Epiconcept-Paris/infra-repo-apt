@@ -10,4 +10,8 @@ File='/etc/apt/sources.list'
 grep "$Host" $File >/dev/null || echo "deb $Repo stretch main" >>$File
 echo -n "Adding APT key: "
 curl -fsSL "$Repo/key.gpg" | apt-key add -
-echo -e "Use:\n\tapt-key list\nto list APT trusted keys"
+echo -n -e "Use:
+    apt-key list		# to list APT trusted keys
+    apt-get update		# to fetch latest package list
+    apt-cache policy <package>	# to show all versions for <package>
+"
