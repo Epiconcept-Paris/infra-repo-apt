@@ -2,6 +2,7 @@
 #
 #	prep.sh - Update prep repository after adding packages
 #		  List prep packages
+#		  Show prep package versions
 #
 Prg=`basename $0`
 
@@ -15,20 +16,28 @@ Log=update.log
 
 Usage()
 {
-    echo "Usage: $Prg [ update | list ]" >&2
+    echo "Usage: $Prg [ update | list | ver [ <package> ] ]" >&2
     exit 1
 }
 
-test "$1" = 'update' -o "$1" = 'list' || Usage
+test "$1" = 'update' -o "$1" = 'list' -o "$1" = 'ver' || Usage
 
 #   Paths are relative, so move to our top directory
 if ! [ -d $SrcDir -a -x update.sh ]; then
     cd `dirname $0`
-    if ! [ -d $SrcDir ]; then
+    if ! [ -d $SrcDir -a -x update.sh ]; then
 	echo "$Prg: cannot find '$SrcDir' directory and 'update.sh' script" >&2
 	exit 2
     fi
 fi
+
+if [ "$1" = 'list' -o "$1" = 'ver' ]; then
+    if ! [ -d $DebDir/any/all ]; then
+	echo "$Prg: no prep files yet (run $Prg update)" >&2
+	exit 2
+    fi
+fi
+# For list and update
 DebCmd="find $SrcDir -type f -name '*.deb' -links 1"
 NewDeb=`eval $DebCmd | wc -l`
 
@@ -36,12 +45,24 @@ NewDeb=`eval $DebCmd | wc -l`
 #   list
 #
 if [ "$1" = 'list' ]; then
-    if ! [ -d $DebDir/any/all ]; then
-	echo "$Prg: no prep files yet (run $Prg update)" >&2
-	exit 2
-    fi
-    find $DebDir -type f -name '*.deb' -links 2 | sed "s;.*/;;" | sort
+    find $DebDir -type f -name '*.deb' -links 2 | sed 's;.*/;;' | sort
     test $NewDeb -gt 0 && echo "$Prg: also found $NewDeb unprocessed source package(s) (new or obsolete)" >&2
+    exit 0
+#
+#   ver
+#
+elif [ "$1" = 'ver' ]; then
+    find $DebDir -type f -name '*.deb' | sed "s;$DebDir/;;" | sort >$TmpDir/deblist
+    if [ "$2" ]; then
+	expr "$2" : '.*/' >/dev/null && key="^$2" || key="/$2"
+	expr "$2" : '.*_' >/dev/null || key="${key}_"
+	grep "$key" $TmpDir/deblist | sed 's;.*/;;'
+    else	# display all packages names that have multiple versions
+	awk -F_ '{print $1}' $TmpDir/deblist | sort >$TmpDir/deblook
+	sort -u $TmpDir/deblook | diff $TmpDir/deblook - | sed -n 's/^< //p' | sed 's;.*/;;'
+	rm $TmpDir/deblook
+    fi
+    rm $TmpDir/deblist
     exit 0
 fi
 
