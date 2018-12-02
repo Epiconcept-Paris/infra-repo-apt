@@ -7,6 +7,13 @@ CfgDir=config
 GpgDir=gpg
 TmpDir=tmp
 
+# Compo is the subdir we want in each dist, as it
+# appears in /etc/apt/sources.list on APT clients
+Compo=main
+
+umask 002
+
+#   Check our target repository top-dir (does not have to exist)
 if [ "$1" ]; then
     expr $1 : '[^/][^/]*/' >/dev/null || { echo "$Prg: '$1' is not a relative path" >&2; exit 2; }
     RepDir=$1
@@ -24,13 +31,10 @@ if ! [ -f $CfgDir/dists -a -f $CfgDir/relconf -a -f $GpgDir/key.gpg ]; then
     fi
 fi
 
-Compo=main
 DebDir=$RepDir/debs
 
-umask 002
-
 # Generate Packages files
-for DebArch in `ls -d $RepDir/debs/*/*`
+for DebArch in `ls -d $DebDir/*/*`
 do
     echo "Generating $DebArch/override"
     for deb in $DebArch/*.deb
@@ -51,14 +55,16 @@ do
     echo "Updating '$Dist' distribution"
     DistDir=$RepDir/dists/$Dist
     CompDir=$DistDir/$Compo
-    for ArchDir in $RepDir/debs/any/*
+    # First collect the packages from debs/any (any $Dist)
+    for ArchDir in $DebDir/any/*
     do
 	Arch=`basename $ArchDir`
 	mkdir -p $CompDir/binary-$Arch
 	cp $ArchDir/Packages $CompDir/binary-$Arch
     done
-    if [ -d $RepDir/debs/$BinDir ]; then
-	for ArchDir in $RepDir/debs/$BinDir/*
+    # Then concat packages from debs/$Bindir if it exists
+    if [ -d $DebDir/$BinDir ]; then
+	for ArchDir in $DebDir/$BinDir/*
 	do
 	    Arch=`basename $ArchDir`
 	    mkdir -p $CompDir/binary-$Arch
@@ -67,6 +73,7 @@ do
     fi
     Archs=
     sep=
+    # Create gziped version of Packages files and collect $Archs
     for ArchDir in $CompDir/binary-*
     do
 	gzip -9 <$ArchDir/Packages >$ArchDir/Packages.gz
@@ -75,8 +82,10 @@ do
     done
     test "`basename $RepDir`" = 'prod' && Orig='production' || Orig='pre-prod'
     sed -e "s/%ORIG%/$Orig/" -e "s/%DIST%/$Dist/" -e "s/%COMPO%/$Compo/" -e "s/%ARCHS%/$Archs/" $CfgDir/relconf >$TmpDir/relconf
-    apt-ftparchive -c $TmpDir/relconf release $DistDir/ >$DistDir/Release
+    apt-ftparchive -c $TmpDir/relconf release $DistDir >$DistDir/Release
     sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --batch -o Release.gpg Release)
 done <$CfgDir/dists
-ln $GpgDir/key.gpg $RepDir
 rm $TmpDir/relconf
+
+# Add public key that APT clients will import with apt-key
+test -f $RepDir/key.gpg || ln $GpgDir/key.gpg $RepDir
