@@ -85,7 +85,7 @@ do
     apt-ftparchive -c $TmpDir/relconf release $DistDir >$DistDir/Release
     sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --batch -o Release.gpg Release)
 done <$CfgDir/dists
-rm $TmpDir/relconf
+rm $DebDir/*/*/Packages $TmpDir/relconf
 
 # Add public key that APT clients will import with apt-key
 test -f $RepDir/key.gpg || ln $GpgDir/key.gpg $RepDir
