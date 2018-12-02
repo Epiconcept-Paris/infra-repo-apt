@@ -35,7 +35,7 @@ do
     echo "Generating $DebArch/override"
     for deb in $DebArch/*.deb
     do
-        dpkg-deb -W --showformat '${Package} optional base\n' $deb 2>/dev/null
+	basename $deb | sed 's/_.*$/ optional base/'
     done | sort -u >$DebArch/override
     echo "Processing $DebArch ..."
     ArchDir=`expr $DebArch : "$RepDir/\(.*\)"`

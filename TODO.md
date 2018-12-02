@@ -1,5 +1,7 @@
-Que faire avec les incohérences des sources : dups, bad pkgnames, old files, etc... ?
--> renommer dans prep/prod
+Pb fichiers supprimés dans sources -> propager
+x Pb noms packages en Maj EPIFILES etc
+x Incohérences des sources : dups, bad pkgnames, old files, etc... ?
+    ~ selectionner en amont, x renommer dans prep/prod, x eliminer
 x prep update reconstruit preprod
 x prep list -> prep pas en prod: package names
 prep ver <pkg-name> ... 

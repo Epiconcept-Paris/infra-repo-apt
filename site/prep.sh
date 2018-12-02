@@ -56,7 +56,9 @@ while read deb
 do
     File=`basename $deb`
     eval `stat -c 'Links=%h Size=%s' $deb`
-    eval `dpkg-deb -W --showformat 'Name=${Package} Vers=${Version} Arch=${Architecture}' $deb`
+    # Only dpkg-deb -f without tag returns package names unchanged (e.g.: in uppercase)
+    # The sed command below assumes (reasonably so) that the tag values do not contain spaces
+    eval `dpkg-deb -f $deb | sed -n -e 's/Package: /Name=/p' -e 's/Version: /Vers=/p' -e 's/Architecture: /Arch=/p' | tr '\n' ' '`
     #echo "File=$File Size=$Size Links=$Links Name=$Name Vers=$Vers Arch=$Arch"
     if [ $Links -eq 1 -a "$Arch" = 'amd64' ]; then
 	skip=
@@ -85,7 +87,7 @@ do
 	    continue
 	fi
 	Pkg=${Name}_${Vers}_$Arch.deb
-	test $File = $Pkg || echo "Warning: `expr $deb : "$SrcDir/\(.*\)"` -> $DebVer/$Arch/$Pkg" >&2
+	test $File = $Pkg || echo "Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
 	ln $deb $ArchDir/$Pkg
     fi
 done <$TmpDir/deblist
