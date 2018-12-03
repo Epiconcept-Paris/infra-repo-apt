@@ -3,7 +3,8 @@
 #	Called as . /opt/share/cfg from container's root/.bashrc
 #
 Host='host.mydomain.tld'
-Repo="http://$Host/apt/prep"
+#Repo="http://$Host/apt/prep"
+Repo="http://$Host/apt/prod"
 File='/etc/hosts'
 grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
 File='/etc/apt/sources.list'
