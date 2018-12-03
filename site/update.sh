@@ -17,6 +17,7 @@ umask 002
 if [ "$1" ]; then
     expr $1 : '[^/][^/]*/' >/dev/null || { echo "$Prg: '$1' is not a relative path" >&2; exit 2; }
     RepDir=$1
+    Type=`basename $1`
 else
     echo "Usage: $Prg <repository-top-dir>" >&2
     exit 1
@@ -80,12 +81,13 @@ do
 	Archs="$Archs$sep`expr $ArchDir : "$CompDir/binary-\(.*\)"`"
 	sep=' '
     done
-    test "`basename $RepDir`" = 'prod' && Orig='production' || Orig='pre-prod'
+    test "$Type" = 'prod' && Orig='production' || Orig='pre-prod'
     sed -e "s/%ORIG%/$Orig/" -e "s/%DIST%/$Dist/" -e "s/%COMPO%/$Compo/" -e "s/%ARCHS%/$Archs/" $CfgDir/relconf >$TmpDir/relconf
     apt-ftparchive -c $TmpDir/relconf release $DistDir >$DistDir/Release
     sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --batch -o Release.gpg Release)
 done <$CfgDir/dists
 rm $DebDir/*/*/Packages $TmpDir/relconf
+test "$Type" = 'prod' && find $DebDir -type f -name '*.deb' | sed 's;.*/;;' >config/prodlist
 
 # Add public key that APT clients will import with apt-key
 test -f $RepDir/key.gpg || ln $GpgDir/key.gpg $RepDir

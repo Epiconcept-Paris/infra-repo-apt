@@ -120,9 +120,15 @@
 │       │   ├── zesty   = stretch
 │       │   └── artful  = stretch
 │       └── key.gpg
+├── gpg
+│   ├── genkey.sh
+│   ├── key.conf
+│   └── key.gpg
 ├── tmp
 │   ├── deblist
-│   └── relconf
+│   ├── relconf
+│   └── ...
 ├── prep.sh
 ├── prod.sh
-└── log
+├── update.sh
+└── update.log
