@@ -5,7 +5,7 @@ Fabrique de dépots APT pour les paquets Epiconcept sur Debian/Ubuntu
 La fabrique gère la construction et la mise à jour de deux dépots : ````prep```` (pré-production) et ````prod```` (production), au moyen des deux scripts principaux ````prep.sh```` et ````prod.sh```` et du script auxiliaire ````update.sh````, destinés à être installés sur un serveur de dépots.
 
 La construction et la mise à jour nécéssitent un jeu de clés GPG qui doivent avoir été générées préalablement au moyen du script ````gpg/genkey.sh```` et de son fichier de configuration spéciale ````gpg/key.conf````.
-Le jeu de clés comprend une sous-clé secrête gpg/signing.gpg qui doit être installée sur le serveur de dépots et qui servira à la signature du fichier ````Release```` des dépots.
+Le jeu de clés comprend une sous-clé secrête ````gpg/signing.gpg```` qui doit être installée sur le serveur de dépots et qui servira à la signature du fichier ````Release```` des dépots.
 Il comprend aussi une clé publique ````gpg/key.gpg```` que les clients APT importeront pour accéder à ces dépots ainsi authentifiés.
 
 La fabrique se compose des fichiers suivants :
@@ -83,12 +83,12 @@ Lors de l'exécution de ````genkey.sh````, trois fichiers sont créés : le jeu 
 
 Le répertoire ````tmp```` est créé si nécessaire et doit normalement être vide après l'exécution des scripts.
 
-Les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` constituent la fabrique proprement dite, dons l'utilisation est détaillée ci-après. Le script ````update.sh```` produit un log ````update.log```` signalant la date des updates et le détail de leur traitement (surtout les anomalies).
+Les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` constituent la fabrique proprement dite, dont l'utilisation est détaillée ci-après. Le script ````update.sh```` produit un log ````update.log```` signalant la date des updates et le détail de leur traitement (surtout les anomalies).
 
 
 ## Utilisation
 ### Préalable : génération du jeu de clés GPG
-Avant de pouvoir utiliser les scripts prep.php et prod.php, il faut générer le jeu de clés GPG de la façon suivante :
+Avant de pouvoir utiliser les scripts ````prep.php```` et ````prod.php````, il faut générer le jeu de clés GPG de la façon suivante :
 ````
 cd gpg
 ./genkey.sh
@@ -149,7 +149,7 @@ Si l'on introduit dans ````sources```` des paquets pour l'architecture ````armh`
 
 Il est aussi possible de changer le nom du composant ````main```` en modifiant le contenu du fichier ````config/component````.
 
-Enfin, la commande ````prep.sh list```` supprime automatiquement des dépots ````prep```` et ````prod```` les paquets qui auraient été supprimés de l'arborescence ````sources/```` depuis la dernière invocation de ````prep.sh list````.
+Enfin, la commande ````prep.sh update```` supprime automatiquement des dépots ````prep```` et ````prod```` les paquets qui auraient été supprimés de l'arborescence ````sources/```` depuis la dernière invocation de ````prep.sh list````.
 
 2. Liste des fichiers de pré-production pas encore en production :
 ````
@@ -207,4 +207,7 @@ ou
 
 Pour pourvoir reproduire le contenu de la fabrique, il faut sauvegarder le répertoire ````config/```` et l'arborescence ````sources/````.
 Il faut également sauvegarder le jeu de clés GPG.
+````
+./prod.sh add `cat config/prodlist`
+````
 (à terminer)
