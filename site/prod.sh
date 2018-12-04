@@ -41,6 +41,8 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
     shift
     date "+---- %Y-%m-%d %H:%M:%S - prod --------------------------------------------" >&2
     find $Dir -type f -name '*.deb' | sed "s;$Dir/;;" | sort >$TmpDir/deblist
+    nbAdd=0
+    nbDel=0
     while test "$1"
     do
 	if expr "$1" : '[^_]*_[^_]*_' >/dev/null; then
@@ -62,12 +64,12 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
 			mkdir -p `dirname $DebDir/$pkg`
 			ln $PreDir/$pkg $DebDir/$pkg
 			echo "Added $DebDir/$pkg"
-			Mod=y
+			nbAdd=`expr $nbAdd + 1`
 		    fi
 		else
 		    if [ "$isF" ]; then
 			rm -v $DebDir/$pkg | sed 's/^r/R/'
-			Mod=y
+			nbDel=`expr $nbDel + 1`
 		    else
 			echo "Package $pkg is not in prod/debs - discarded" >&2
 		    fi
@@ -79,7 +81,7 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
 	shift
     done
     rm $TmpDir/deblist
-    test "$Mod" && exec ./update.sh $RepDir || echo "No package $Act."
+    test $nbAdd -gt 0 -o $nbDel -gt 0 && exec ./update.sh $RepDir || echo "No package $Act."
 #
 #   ver
 #

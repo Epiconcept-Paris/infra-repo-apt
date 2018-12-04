@@ -1,4 +1,5 @@
 #!/bin/sh
+#
 #	update.sh - Update repository control files
 #
 Prg=`basename $0`
@@ -12,6 +13,14 @@ TmpDir=tmp
 Compo=`cat $CfgDir/component`
 
 umask 002
+
+#   Check package dependencies
+for binpkg in dpkg-scanpackages:dpkg-dev apt-ftparchive:apt-utils
+do
+    bin=`expr "$binpkg" : '\([^:]*\):'`
+    pkg=`expr "$binpkg" : '[^:]*:\(.*\)$'`
+    command -v $bin >/dev/null || { echo "$Prg: $bin not found, install package $pkg" >&2; exit 3; }
+done
 
 #   Check our target repository top-dir (does not have to exist)
 if [ "$1" ]; then

@@ -24,18 +24,22 @@ Usage()
 test "$1" = 'update' -o "$1" = 'list' -o "$1" = 'ver' || Usage
 
 #   Paths are relative, so move to our top directory
-if ! [ -f $CfgDir/obsolete -a -d $SrcDir -a -x update.sh ]; then
+if ! [ -f $CfgDir/obsolete -a -x update.sh ]; then
     cd `dirname $0`
-    if ! [ -f $CfgDir/obsolete -a -d $SrcDir -a -x update.sh ]; then
-	echo "$Prg: cannot find '$SrcDir' directory and 'update.sh' script" >&2
+    if ! [ -f $CfgDir/obsolete -a -x update.sh ]; then
+	echo "$Prg: cannot find '$CfgDir/obsolete' file and 'update.sh' script" >&2
 	exit 2
     fi
+fi
+if ! [ -d $SrcDir ]; then
+    echo "$Prg: you must first create and populate a '$SrcDir' directory" >&2
+    exit 3
 fi
 
 if [ "$1" = 'list' -o "$1" = 'ver' ]; then
     if ! [ -d $DebDir/any/all ]; then
 	echo "$Prg: no prep files yet (run $Prg update)" >&2
-	exit 2
+	exit 4
     fi
 fi
 # For list and update
@@ -71,6 +75,7 @@ fi
 #   update
 #
 exec 2>>$Log
+nbAdd=0
 if [ $NewDeb -gt 0 ]; then
     # Link new packages to prep/
     mkdir -p $TmpDir
@@ -98,8 +103,9 @@ if [ $NewDeb -gt 0 ]; then
 	fi
 	DebVer=`expr "$Vers" : '.*+\(deb[1-9][0-9]*\)$'` || DebVer='any'
 	ArchDir=$DebDir/$DebVer/$Arch
-	if [ -f $ArchDir/$File ]; then
-	    eval `stat -c 'iNum=%i PrSz=%s' $ArchDir/$File`
+	Pkg=${Name}_${Vers}_$Arch.deb
+	if [ -f $ArchDir/$Pkg ]; then
+	    eval `stat -c 'iNum=%i PrSz=%s' $ArchDir/$Pkg`
 	    prev=`find $SrcDir -inum $iNum`
 	    if cmp $deb $prev >/dev/null; then
 		echo "Skipping package $deb already added from `dirname $prev`" >&2
@@ -108,33 +114,36 @@ if [ $NewDeb -gt 0 ]; then
 	    fi
 	    continue
 	fi
-	Pkg=${Name}_${Vers}_$Arch.deb
 	test $File = $Pkg || echo "Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
 	mkdir -p $ArchDir
-	test "$Mod" || echo "Adding files to $RepDir ..."
+	test $nbAdd -eq 0 && echo "Adding files to $RepDir ..."
 	ln $deb $ArchDir/$Pkg
-	Mod=y
+	nbAdd=`expr $nbAdd + 1`
     done <$TmpDir/deblist
     rm $TmpDir/deblist
 fi
-test "$Mod" || echo "No new packages found." | tee -a $Log
+(test $nbAdd -eq 0 && echo "No new packages found." || echo "$nbAdd packages added.") | tee -a $Log
 
 #   Remove .debs whose source was deleted
 if [ -d $DocDir/prod/debs ]; then
     find $DocDir/prod/debs -type f -name '*.deb' -links -3 >$TmpDir/prodprep
     if [ -s $TmpDir/prodprep ]; then
-	echo "Removing stale production packages whose source has been deleted"
+	nbDel=`wc -l <$TmpDir/prodprep`
+	echo "Removing $nbDel stale production packages whose source has been deleted"
 	xargs rm -v <$TmpDir/prodprep | sed 's/^r/R/' >&2
+	echo "Updating $DocDir/prod ..."
 	./update.sh $DocDir/prod
     fi
     rm $TmpDir/prodprep
 fi
+#   We don't keep our possible nbDel as it was production packages, not ours
+nbDel=0
 find $DebDir -type f -name '*.deb' -links -2 >$TmpDir/preponly
 if [ -s $TmpDir/preponly ]; then
-    echo "Removing stale pre-prod packages whose source has been deleted"
+    nbDel=`wc -l <$TmpDir/preponly`
+    echo "Removing $nbDel stale pre-prod packages whose source has been deleted"
     xargs rm -v <$TmpDir/preponly | sed 's/^r/R/' >&2
-    Mod=y
 fi
 rm $TmpDir/preponly
 
-test "$Mod" && exec ./update.sh $RepDir
+test $nbAdd -gt 0 -o $nbDel -gt 0 && exec ./update.sh $RepDir
