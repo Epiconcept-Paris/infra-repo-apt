@@ -12,6 +12,7 @@ PreDir=$DocDir/prep/debs
 RepDir=$DocDir/prod
 DebDir=$RepDir/debs
 TmpDir=tmp
+Log=update.log
 
 Usage()
 {
@@ -29,14 +30,16 @@ if ! [ -d $PreDir -a -x update.sh ]; then
 	exit 2
     fi
 fi
+exec 2>>$Log
+mkdir -p $TmpDir
 
 #
 #   add & del
 #
 if [ "$1" = 'add' -o "$1" = 'del' ]; then
-    test "$1" || Usage
     test "$1" = 'add' && { Dir=$PreDir; Act='added'; } || { Dir=$DebDir; Act='deleted'; }
     shift
+    date "+---- %Y-%m-%d %H:%M:%S - prod --------------------------------------------" >&2
     find $Dir -type f -name '*.deb' | sed "s;$Dir/;;" | sort >$TmpDir/deblist
     while test "$1"
     do
@@ -92,5 +95,4 @@ else
 	rm $TmpDir/deblook
     fi
     rm $TmpDir/deblist
-    exit 0
 fi

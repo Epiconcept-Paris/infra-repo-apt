@@ -1,7 +1,7 @@
-obsolete
-component
-export GPG keyring
 finir README.md
+x export GPG keyring
+x obsolete
+x component
 x Pb fichiers supprimés dans sources -> propager
 x Pb noms packages en Maj EPIFILES etc
 x Incohérences des sources : dups, bad pkgnames, old files, etc... ?

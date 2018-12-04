@@ -1,0 +1,6 @@
+#
+#	obsolete - Regexps of obsolete package names
+#
+epi-php5-6-oauth
+epi-php53-zmq
+epi-php-.*-7-[12]

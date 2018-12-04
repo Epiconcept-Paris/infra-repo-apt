@@ -7,6 +7,7 @@
 Prg=`basename $0`
 
 # See tree.txt for wanted and required directory tree
+CfgDir=config
 SrcDir=sources
 DocDir=docroot
 RepDir=$DocDir/prep
@@ -23,9 +24,9 @@ Usage()
 test "$1" = 'update' -o "$1" = 'list' -o "$1" = 'ver' || Usage
 
 #   Paths are relative, so move to our top directory
-if ! [ -d $SrcDir -a -x update.sh ]; then
+if ! [ -f $CfgDir/obsolete -a -d $SrcDir -a -x update.sh ]; then
     cd `dirname $0`
-    if ! [ -d $SrcDir -a -x update.sh ]; then
+    if ! [ -f $CfgDir/obsolete -a -d $SrcDir -a -x update.sh ]; then
 	echo "$Prg: cannot find '$SrcDir' directory and 'update.sh' script" >&2
 	exit 2
     fi
@@ -73,7 +74,7 @@ exec 2>>$Log
 if [ $NewDeb -gt 0 ]; then
     # Link new packages to prep/
     mkdir -p $TmpDir
-    date "+---- %Y-%m-%d %H:%M:%S ---------------------------------------------------" >&2
+    date "+---- %Y-%m-%d %H:%M:%S - prep --------------------------------------------" >&2
     eval $DebCmd >$TmpDir/deblist
     while read deb
     do
@@ -85,11 +86,11 @@ if [ $NewDeb -gt 0 ]; then
 	#echo "File=$File Size=$Size Name=$Name Vers=$Vers Arch=$Arch"
 	if [ $Arch = 'amd64' ]; then
 	    skip=
-	    case $Name in
-		epi-php5-6-oauth)	skip=y ;;
-		epi-php53-zmq)	skip=y ;;
-		epi-php-*-7-[12])	skip=y ;;
-	    esac
+	    while read RegExp rest
+	    do
+		expr "$RegExp" : '#' >/dev/null && continue	# allow comments
+		echo "$Name" | grep "^$RegExp" >/dev/null && { skip=y; break; }
+	    done <$CfgDir/obsolete
 	    if [ "$skip" ]; then
 		echo "Skipping obsolete package '$File'" >&2
 		continue

@@ -1,6 +1,8 @@
-config/prodlist
+site/config/prodlist
 site/sources
 site/docroot
+site/gpg/master.gpg
+site/gpg/signing.gpg
 site/gpg/key.gpg
 site/update.log
 site/tmp

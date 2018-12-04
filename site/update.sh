@@ -9,7 +9,7 @@ TmpDir=tmp
 
 # Compo is the subdir we want in each dist, as it
 # appears in /etc/apt/sources.list on APT clients
-Compo=main
+Compo=`cat $CfgDir/component`
 
 umask 002
 
@@ -48,9 +48,12 @@ do
     rm $DebArch/override
 done
 
-# Make dists directories
+# APT requires the Release files to be signed with a *certified* key and
+#	only the subkey (certified by the main key) fulfils that requirement
 Mail="`sed -n 's/^Name-Email: //p' $GpgDir/key.conf`"
 Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
+
+# Make dists directories
 while read Dist BinDir
 do
     echo "Updating '$Dist' distribution"

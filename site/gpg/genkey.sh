@@ -29,8 +29,14 @@ echo "Please generate entropy with 'sudo grep -Lr SomeImpossibleString /'..."
 gpg --gen-key --batch $Cnf
 gpg -k
 
-#   Export the public signing subkey to be copied in the repo
-#   APT requires the Release files to be signed with a *certified* key and
-#	only the subkey (certified by the main key) fulfils that requirement
+#   Make a full backup to be restored with gpg --import
+gpg -a --export-secret-keys $Mail >master.gpg
+
+#   Export the signing subkey for gpg --import on the repositories server
+gpg -a --export-secret-subkeys $Mail >signing.gpg
+
+#   Export the public subkey key.gpg to be copied in each repository,
+#	downloaded by the APT client and passed to apt-key add
+#
 Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
-gpg -a --export $Sign >key.gpg
+gpg -a --export $Mail >key.gpg				# for apt-key on clients
