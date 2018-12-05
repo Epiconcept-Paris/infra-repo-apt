@@ -2,7 +2,7 @@
 Fabrique de dépots APT pour les paquets Epiconcept sur Debian/Ubuntu
 
 
-## Présentation
+## 1 Présentation
 
 La fabrique gère la construction et la mise à jour de deux dépots APT : ````prep```` (pré-production) et ````prod```` (production), au moyen des deux scripts principaux ````prep.sh```` et ````prod.sh```` et du script auxiliaire ````update.sh````, destinés à être installés sur un serveur de dépots.
 
@@ -97,9 +97,9 @@ Le répertoire ````tmp```` est créé si nécessaire et doit normalement être v
 Enfin, le script ````update.sh```` produit un log ````update.log```` qui signale la date des updates et le détail de leur traitement (surtout les anomalies).
 
 
-## Installation
+## 2 Installation
 
-### Installation des paquets prérequis
+### 2.1 Installation des paquets prérequis
 
 Le script ````update.sh```` utilisant les commandes ````dpkg-scanpackages```` et ````apt-ftparchive````, il faut avoir respectivement installé sur le serveur de dépots les packages Debian
  - dpkg-dev
@@ -107,9 +107,9 @@ Le script ````update.sh```` utilisant les commandes ````dpkg-scanpackages```` et
 
 pour que les scripts fonctionnent correctement.
 
-### Génération du jeu de clés GPG
+### 2.2 Génération du jeu de clés GPG
 
-Avant de pouvoir utiliser les scripts ````prep.php```` et ````prod.php````, il faut d'abord générer un jeu de clés GPG. Cette génération se fait par le script ````gpg/genkey.sh````, qui utilise le fichier de configuration ````gpg/key.conf````.
+Avant de pouvoir utiliser les scripts ````prep.sh```` et ````prod.sh````, il faut d'abord générer un jeu de clés GPG. Cette génération se fait par le script ````gpg/genkey.sh````, qui utilise le fichier de configuration ````gpg/key.conf````.
 
 Avant la génération proprement dite (de préférence ailleurs que sur le serveur final de dépots APT), il convient de passer en revue et de modifier s'il y a lieu les 4 dernières lignes du fichier ````key.conf```` :
 
@@ -139,7 +139,7 @@ Quand le script se termine, le répertoire contient trois clés :
 
 Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les fichiers ````key.conf```` et ````key.gpg```` sont nécessaires dans le répertoire ````gpg````.
 
-### Copie des fichiers
+### 2.3 Copie des fichiers
 
 Il faut copier dans un même répertoire sur le serveur de dépots :
 - le répertoire ````site/config```` de ce dépot git
@@ -149,9 +149,9 @@ Il faut copier dans un même répertoire sur le serveur de dépots :
 Il faut créer et peupler de paquets ````.deb```` le répertoire ````sources````.
 
 
-## Utilisation
+## 3 Utilisation
 
-### Gestion du dépot de pré-production ````prep````
+### 3.1 Gestion du dépot de pré-production ````prep````
 
 Elle se fait par le script ````prep.sh````. Trois commandes sont disponibles :
 
@@ -248,7 +248,7 @@ ou encore
 ou un mélange de ces deux commandes.
 
 
-### Gestion du dépot de production ````prod````
+### 3.2 Gestion du dépot de production ````prod````
 
 Elle se fait par le script ````prod.sh````. Trois commandes sont également disponibles :
 
@@ -279,15 +279,15 @@ Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'a
 (de manière identique à ````prep.sh ver ...````).
 
 
-## Sauvegarde, restauration et "fsck"
+## 4 Sauvegarde, restauration et "fsck"
 
-### Sauvegarde
+### 4.1 Sauvegarde
 
 Pour pouvoir reproduire le contenu de la fabrique, il faut sauvegarder le répertoire ````config```` et l'arborescence ````sources/````.
 
 Le répertoire ````gpg```` a normalement été sauvegardé en entier après la génération du jeu de clés GPG.
 
-### Restauration
+### 4.2 Restauration
 
 Après avoir installé la clé GPG de signature par :
 ````
@@ -301,7 +301,7 @@ et avoir restauré les éléments (sauvegardés comme indiqué ci-dessus) sur le
 ````
 pour restaurer complètement les dépots APT.
 
-### Refection des dépots APT (comme fsck pour les systèmes de fichier)
+### 4.3 Refection des dépots APT (comme fsck pour les systèmes de fichier)
 
 La fabrique de dépots utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de ````sources/````, de ````docroot/prep/debs/```` et de ````docroot/prod/debs/````.
 Pour diverses raisons, il peut arriver que ces liens soient anormalement cassés.
@@ -315,7 +315,7 @@ rm -r docroot
 pour rétablir le fonctionnement normal.
 
 
-## Image docker de test
+## 5 Image docker de test
 
 Ce dépot git contient également un répertoire ````test```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
 
