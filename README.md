@@ -82,7 +82,7 @@ Lors de l'exécution de ````genkey.sh````, trois fichiers sont créés : le jeu 
 Une partie du répertoire ````gpg````: ````key.conf```` et ````key.gpg```` doit se trouver sur le serveur de dépots.
 La clé ````signing.gpg```` doit aussi y être installée par ````gpg --import signing.gpg````.
 
-Les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` constituent la fabrique proprement dite, dont l'utilisation est détaillée ci-après.
+Les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` constituent la fabrique proprement dite, dont l'utilisation est détaillée dans une section ci-dessous.
 Ils doivent donc être placés à coté (dans le même sur-répertoire) que ````config/````, ````gpg/```` et ````sources/```` décrit ci-après.
 
 Le répertoire ````sources```` contient les paquets Debian d'origine, rangés éventuellement selon leurs différentes provenances (serveur de build, Travis CI et paquets binaires Epiconcept).
@@ -117,9 +117,9 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 - Name-Email: infra@epiconcept.fr
 - Expire-Date: 3y
 - Passphrase: And there were gardens bright with sinuous rills
-	(tirée du poème "Xanadu" de Coleridge)
+	*(tirée du poème "Xanadu" de Coleridge)*
 
-**Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement.**
+**Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement**,
 
 par exemple avec les commandes suivantes :
 
@@ -129,7 +129,7 @@ vi key.conf
 ./genkey.sh
 ````
 Si le script genkey.sh semble alors se bloquer, c'est qu'il attend de "l'entropie système", qu'il est possible de lui fournir :
-- en tapant sur un autre terminal une commande du type de celle affichée par le script
+- en tapant sur un autre terminal une commande du type de celle affichée par ````genkey.sh````
 - ou en installant préalablement le package Debian 'rng-tools' sur le système de génération des clés
 
 Quand le script se termine, le répertoire contient trois clés :
@@ -144,9 +144,9 @@ Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les
 Il faut copier dans un même répertoire sur le serveur de dépots :
 - le répertoire ````site/config```` de ce dépot git
 - les fichiers ````key.conf````, ````key.gpg```` et ````signing.gpg```` (à supprimer après import) de ````site/gpg/````
-- les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` dans ````site/````
+- les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` de ````site/````
 
-Il faut créer et peupler le répertoire ````sources````
+Il faut créer et peupler de paquets ````.deb```` le répertoire ````sources````.
 
 
 ## Utilisation
@@ -155,7 +155,7 @@ Il faut créer et peupler le répertoire ````sources````
 
 Elle se fait par le script ````prep.sh````. Trois commandes sont disponibles :
 
-1. Mise à jour du dépot ````prep```` après la modification du repértoire ````sources/```` :
+1. Mise à jour du dépot ````prep```` après la modification du répertoire ````sources```` :
 ````
 ./prep.sh update
 ````
@@ -222,17 +222,19 @@ Enfin, la commande ````prep.sh update```` supprime automatiquement des dépots `
 ````
 ./prep.sh list
 ````
-3a. Liste des noms de paquets (sans version, au sens apt / dpkg) de pré-production comportant plus d'une version :
+3. Liste des différentes versions d'un paquet de pré-production :
 ````
-./prep.sh ver
-````
-3b. liste des différentes versions d'un paquet :
-````
-./prep.sh ver <nom-dpkg-paquet>
+./prep.sh ver <nom-fichier-paquet>
 ````
 ou
 ````
-./prep.sh ver <nom-fichier-paquet>
+./prep.sh ver <nom-dpkg-paquet>
+````
+Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'au premier caractère '_'.
+
+3. (variante) Liste des noms-dpkg de paquets de pré-production comportant plus d'une version :
+````
+./prep.sh ver
 ````
 
 Pour obtenir par ailleurs la liste de tous les paquets du dépot ````prep````, on peut employer par exemple :
@@ -260,17 +262,19 @@ Elle se fait par le script ````prod.sh````. Trois commandes sont également disp
 ./prod.sh del <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ````
 
-3a. Liste des noms de paquets (sans version, au sens apt / dpkg) de production comportant plus d'une version :
+3. Liste des différentes versions d'un paquet de production :
 ````
-./prep.sh ver
-````
-3b. liste des différentes versions d'un paquet :
-````
-./prep.sh ver <nom-dpkg-paquet>
+./prod.sh ver <nom-fichier-paquet>
 ````
 ou
 ````
-./prep.sh ver <nom-fichier-paquet>
+./prod.sh ver <nom-dpkg-paquet>
+````
+Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'au premier caractère '_'.
+
+3. (variante) Liste des noms-dpkg de paquets de production comportant plus d'une version :
+````
+./prod.sh ver
 ````
 (de manière identique à ````prep.sh ver ...````).
 
@@ -280,6 +284,7 @@ ou
 ### Sauvegarde
 
 Pour pouvoir reproduire le contenu de la fabrique, il faut sauvegarder le répertoire ````config```` et l'arborescence ````sources/````.
+
 Le répertoire ````gpg```` a normalement été sauvegardé en entier après la génération du jeu de clés GPG.
 
 ### Restauration
@@ -289,7 +294,7 @@ Après avoir installé la clé GPG de signature par :
 gpg --import gpg/signing.gpg
 rm gpg/signing.gpg
 ````
-et avoir restauré les éléments sauvegardés comme indiqué ci-dessus sur le serveur désiré, il suffit d'exécuter :
+et avoir restauré les éléments (sauvegardés comme indiqué ci-dessus) sur le serveur désiré, il suffit d'exécuter :
 ````
 ./prep.sh update
 ./prod.sh add `cat config/prodlist`
@@ -313,7 +318,9 @@ pour rétablir le fonctionnement normal.
 ## Image docker de test
 
 Ce dépot git contient également un répertoire ````test```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
-Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image.
-Le conteneur partage le répertoire test/share et lance automatiquement le script test/cfg, également visible dans share par un hardlink.
 
-Enfin ce dépot git contient aussi le script bin/debinfo qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.
+Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image.
+
+Le conteneur partage le répertoire ````test/share```` et lance automatiquement le script ````test/cfg````, également visible dans ````share```` par un hardlink.
+
+Enfin ce dépot git contient aussi le script ````bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.
