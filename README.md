@@ -44,7 +44,7 @@ et elle exploite l'arborescence suivante:
 ├── prod.sh
 ├── update.sh
 │
-├── sources         (exemple d'arborescence, à fournir)
+├── sources	    (exemple d'arborescence, à fournir)
 │   ├── builds
 │   │   └── *.deb
 │   ├── travis
@@ -117,7 +117,7 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 - Name-Email: infra@epiconcept.fr
 - Expire-Date: 3y
 - Passphrase: And there were gardens bright with sinuous rills
-	*(tirée du poème "Xanadu" de Coleridge)*
+	&nbsp; &nbsp; *(tirée du poème "Xanadu" de Coleridge)*
 
 **Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement**,
 
@@ -155,7 +155,7 @@ Il faut créer et peupler de paquets ````.deb```` le répertoire ````sources````
 
 Elle se fait par le script ````prep.sh````. Trois commandes sont disponibles :
 
-1. Mise à jour du dépot ````prep```` après la modification du répertoire ````sources```` :
+##### 1) Mise à jour du dépot ````prep```` après la modification du répertoire ````sources```` :
 ````
 ./prep.sh update
 ````
@@ -218,11 +218,11 @@ Il est aussi possible de changer le nom du composant ````main```` en modifiant l
 
 Enfin, la commande ````prep.sh update```` supprime automatiquement des dépots ````prep```` et ````prod```` les paquets qui auraient été supprimés de l'arborescence ````sources/```` depuis la dernière invocation de ````prep.sh update````.
 
-2. Liste des fichiers de pré-production pas encore en production :
+##### 2) Liste des fichiers de pré-production pas encore en production :
 ````
 ./prep.sh list
 ````
-3. Liste des différentes versions d'un paquet de pré-production :
+##### 3a) Liste des différentes versions d'un paquet de pré-production :
 ````
 ./prep.sh ver <nom-fichier-paquet>
 ````
@@ -232,7 +232,7 @@ ou
 ````
 Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'au premier caractère '_'.
 
-3. (variante) Liste des noms-dpkg de paquets de pré-production comportant plus d'une version :
+##### 3b) Liste des *noms-dpkg* de paquets de pré-production comportant plus d'une version :
 ````
 ./prep.sh ver
 ````
@@ -252,17 +252,17 @@ ou un mélange de ces deux commandes.
 
 Elle se fait par le script ````prod.sh````. Trois commandes sont également disponibles :
 
-1. Ajout au dépot ````prod```` de paquets du dépot ````prep```` :
+##### 1) Ajout au dépot ````prod```` de paquets du dépot ````prep```` :
 ````
 ./prod.sh add <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ````
 
-2. Suppression de paquets du dépot ````prod```` :
+##### 2) Suppression de paquets du dépot ````prod```` :
 ````
 ./prod.sh del <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ````
 
-3. Liste des différentes versions d'un paquet de production :
+##### 3a) Liste des différentes versions d'un paquet de production :
 ````
 ./prod.sh ver <nom-fichier-paquet>
 ````
@@ -272,7 +272,7 @@ ou
 ````
 Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'au premier caractère '_'.
 
-3. (variante) Liste des noms-dpkg de paquets de production comportant plus d'une version :
+##### 3b) Liste des noms-dpkg de paquets de production comportant plus d'une version :
 ````
 ./prod.sh ver
 ````
