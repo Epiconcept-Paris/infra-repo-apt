@@ -23,7 +23,7 @@ Usage()
 
 test "$1" = 'update' -o "$1" = 'list' -o "$1" = 'ver' || Usage
 
-#   Paths are relative, so move to our top directory
+#   We want our paths relative, so move to our top directory
 if ! [ -f $CfgDir/obsolete -a -x update.sh ]; then
     cd `dirname $0`
     if ! [ -f $CfgDir/obsolete -a -x update.sh ]; then

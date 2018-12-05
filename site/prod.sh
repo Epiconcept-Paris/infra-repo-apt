@@ -22,7 +22,7 @@ Usage()
 
 test "$1" = 'add' -o "$1" = 'del' -o "$1" = 'ver' || Usage
 
-#   Paths are relative, so move to our top directory
+#   We want our paths relative, so move to our top directory
 if ! [ -d $PreDir -a -x update.sh ]; then
     cd `dirname $0`
     if ! [ -d $PreDir -a -x update.sh ]; then
@@ -30,13 +30,13 @@ if ! [ -d $PreDir -a -x update.sh ]; then
 	exit 2
     fi
 fi
-exec 2>>$Log
 mkdir -p $TmpDir
 
 #
 #   add & del
 #
 if [ "$1" = 'add' -o "$1" = 'del' ]; then
+    exec 2>>$Log
     test "$1" = 'add' && { Dir=$PreDir; Act='added'; } || { Dir=$DebDir; Act='deleted'; }
     shift
     date "+---- %Y-%m-%d %H:%M:%S - prod --------------------------------------------" >&2
