@@ -6,9 +6,9 @@ Fabrique de dépots APT pour les paquets Epiconcept sur Debian/Ubuntu
 
 La fabrique gère la construction et la mise à jour de deux dépots APT : ````prep```` (pré-production) et ````prod```` (production), au moyen des deux scripts principaux ````prep.sh```` et ````prod.sh```` et du script auxiliaire ````update.sh````, destinés à être installés sur un serveur de dépots.
 
-La construction et la mise à jour des dépots APT nécéssitent un jeu de clés GPG qui doit avoir été générées préalablement au moyen du script ````gpg/genkey.sh````, préférablement ailleurs que sur le serveur de dépots APT.
+La construction et la mise à jour des dépots APT nécéssitent un jeu de clés GPG qui doivent avoir été générées préalablement au moyen du script ````gpg/genkey.sh````, préférablement ailleurs que sur le serveur de dépots APT.
 
-La fabrique se compose des fichiers suivants (dans le répertoire ````site/```` de ce dépot git) :
+La fabrique se compose des fichiers suivants (dans le répertoire ````site```` de ce dépot git) :
 ````
 config/obsolete
 config/component
@@ -53,13 +53,15 @@ et elle exploite l'arborescence suivante:
 │       └── *.deb
 │
 ├── docroot	    (généré par les scripts)
-│   ├── prep
+│   │
+│   ├── prep	    (LE dépot de pré-production)
 │   │   ├── debs
 │   │   │   └── ... (paquets)
 │   │   ├── dists
 │   │   │   └── ... (distributions Debian/Ubuntu)
 │   │   └── key.gpg
-│   └── prod
+│   │
+│   └── prod	    (LE dépot de production)
 │       ├── debs
 │       │   └── ... (paquets)
 │       ├── dists
@@ -77,22 +79,22 @@ L'utilisateur de la fabrique doit placer ce répertoire sur le serveur.
 
 Le répertoire ````gpg```` contient le script ````genkey.sh```` de génération du jeu de clés GPG et surtout le fichier de configuration ````key.conf```` qui contient la passphrase du jeu de clés GPG.
 Lors de l'exécution de ````genkey.sh````, trois fichiers sont créés : le jeu complet ````master.gpg````, la sous-clé secrète de signature ````signing.gpg```` et la clé publique ````key.gpg````.
-Une partie de ce répertoire : ````key.conf```` et ````key.gpg```` doit se trouver sur le serveur de dépots.
+Une partie du répertoire ````gpg````: ````key.conf```` et ````key.gpg```` doit se trouver sur le serveur de dépots.
 La clé ````signing.gpg```` doit aussi y être installée par ````gpg --import signing.gpg````.
 
 Les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` constituent la fabrique proprement dite, dont l'utilisation est détaillée ci-après.
-Ils doivent donc être placés à coté (dans le même sur-répertoire) que ````config/````, ````gpg/```` et ````sources```` ci-dessus.
+Ils doivent donc être placés à coté (dans le même sur-répertoire) que ````config/````, ````gpg/```` et ````sources/```` décrit ci-après.
 
 Le répertoire ````sources```` contient les paquets Debian d'origine, rangés éventuellement selon leurs différentes provenances (serveur de build, Travis CI et paquets binaires Epiconcept).
 Il est de la responsabilité de l'utilisateur de la fabrique de fournir le répertoire ````sources```` peuplé avec les répertoires et les fichiers ````.deb```` de son choix.
 
-Le répertoire ````docroot```` est destiné comme son nom l'indique à être la racine du serveur web de paquets.
+Le répertoire ````docroot```` est destiné, comme son nom l'indique, à être la racine du serveur web de paquets.
 Il contient les répertoires ````prep```` et ````prod````, pour chacun des deux dépots de pré-production et de production.
 La raison d'être de la fabrique étant de générer et de mettre à jour ce répertoire et ses contenus, l'utilisateur n'a pas à y intervenir ni même à créer le répertoire ````docroot````.
 
 Le répertoire ````tmp```` est créé si nécessaire et doit normalement être vide après l'exécution des scripts. L'utilisateur n'a donc pas à s'en préoccuper.
 
-Le script ````update.sh```` produit un log ````update.log```` qui signale la date des updates et le détail de leur traitement (surtout les anomalies).
+Enfin, le script ````update.sh```` produit un log ````update.log```` qui signale la date des updates et le détail de leur traitement (surtout les anomalies).
 
 
 ## Installation
@@ -102,6 +104,7 @@ Le script ````update.sh```` produit un log ````update.log```` qui signale la dat
 Le script ````update.sh```` utilisant les commandes ````dpkg-scanpackages```` et ````apt-ftparchive````, il faut avoir respectivement installé sur le serveur de dépots les packages Debian
  - dpkg-dev
  - apt-utils
+
 pour que les scripts fonctionnent correctement.
 
 ### Génération du jeu de clés GPG
@@ -114,7 +117,9 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 - Name-Email: infra@epiconcept.fr
 - Expire-Date: 3y
 - Passphrase: And there were gardens bright with sinuous rills
-    (tirée du poème "Xanadu" de Coleridge)
+
+	(tirée du poème "Xanadu" de Coleridge)
+**Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement.**
 
 par exemple avec les commandes suivantes :
 
@@ -129,19 +134,19 @@ Si le script genkey.sh semble alors se bloquer, c'est qu'il attend de "l'entropi
 
 Quand le script se termine, le répertoire contient trois clés :
 - une clé principale ````master.gpg````, qu'il est impératif de sauvergarder et qu'il vaut mieux ensuite supprimer, surtout si elle est générée sur le serveur de dépots
-- une sous-clé secrète ````signing.gpg````, qui servira à la signature des fichiers Release des distributions dans les dépots et qui doit être installée sur le serveur de dépots APT par : ```` gpg --import signing.gpg ````
+- une sous-clé secrète ````signing.gpg````, qui servira à la signature des fichiers ````Release```` des distributions dans les dépots et qui doit être installée sur le serveur de dépots APT par : ```` gpg --import signing.gpg ````
 - une clé publique ````key.gpg```` qui sera intégrée aux dépots APT et installée sur les clients APT par : ````apt-key add key.gpg````
 
-Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les fichiers ````key.conf```` et ````key.gpg```` sont nécessaires dans le répertoire ````gpg/````.
+Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les fichiers ````key.conf```` et ````key.gpg```` sont nécessaires dans le répertoire ````gpg````.
 
 ### Copie des fichiers
 
 Il faut copier dans un même répertoire sur le serveur de dépots :
-- le répertoire ````site/config/```` de ce dépot git
+- le répertoire ````site/config```` de ce dépot git
 - le fichiers key.conf, key.gpg et signing.gpg (à supprimer après import) de ````site/gpg/````
 - les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` dans ````site/````
 
-Il faut créer et peupler le répertoire ````sources/````
+Il faut créer et peupler le répertoire ````sources````
 
 
 ## Utilisation
@@ -276,8 +281,8 @@ ou
 
 ### Sauvegarde
 
-Pour pouvoir reproduire le contenu de la fabrique, il faut sauvegarder le répertoire ````config/```` et l'arborescence ````sources/````.
-Le répertoire ````gpg/```` a normalement été sauvegardé en entier après la génération du jeu de clés GPG.
+Pour pouvoir reproduire le contenu de la fabrique, il faut sauvegarder le répertoire ````config```` et l'arborescence ````sources/````.
+Le répertoire ````gpg```` a normalement été sauvegardé en entier après la génération du jeu de clés GPG.
 
 ### Restauration
 
@@ -309,8 +314,8 @@ pour rétablir le fonctionnement normal.
 
 ## Image docker de test
 
-Ce dépot git contient également un répertoire ````test/```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
+Ce dépot git contient également un répertoire ````test```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
 Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image.
 Le conteneur partage le répertoire test/share et lance automatiquement le script test/cfg, également visible dans share par un hardlink.
 
-Enfin ce dépot git contient aussi le script bin/debinfo qui n'est qu'une étude, un proof of concept pour la fabrique de dépots APT, qui ne l'utilise pas.
+Enfin ce dépot git contient aussi le script bin/debinfo qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.
