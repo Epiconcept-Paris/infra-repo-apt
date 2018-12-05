@@ -117,8 +117,8 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 - Name-Email: infra@epiconcept.fr
 - Expire-Date: 3y
 - Passphrase: And there were gardens bright with sinuous rills
-
 	(tirée du poème "Xanadu" de Coleridge)
+
 **Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement.**
 
 par exemple avec les commandes suivantes :
@@ -143,7 +143,7 @@ Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les
 
 Il faut copier dans un même répertoire sur le serveur de dépots :
 - le répertoire ````site/config```` de ce dépot git
-- le fichiers key.conf, key.gpg et signing.gpg (à supprimer après import) de ````site/gpg/````
+- les fichiers ````key.conf````, ````key.gpg```` et ````signing.gpg```` (à supprimer après import) de ````site/gpg/````
 - les scripts ````prep.sh````, ````prod.sh```` et ````update.sh```` dans ````site/````
 
 Il faut créer et peupler le répertoire ````sources````
@@ -183,9 +183,8 @@ en extrayant \<nom-paquet>, \<version-paquet> et \<archi-paquet> de chaque paque
 Les paquets dont le nom dans ````sources/```` n'est pas normalisé sont signalés, avec leur nom normalisé, dans ````update.log````.
 
 Puis ````prep.sh```` invoque le script auxiliaire ````update.sh```` qui peuple le répertoire ````docroot/prep/dists```` selon le contenu du fichier ````config/dists```` dont voici un extrait :
-
-...
 ````
+...
 saucy	deb7
 jessie	deb8
 trusty	deb8
@@ -194,9 +193,8 @@ vivid	deb8
 wily	deb8
 stretch	deb9
 xenial	deb9
-````
 ...
-
+````
 Pour le premier champ de chaque ligne du fichier ````config/dists````, ````update.sh```` crée un répertoire de distribution portant ce nom et ayant la structure :
 ````
 <nom-distrib>
@@ -210,11 +208,11 @@ Pour le premier champ de chaque ligne du fichier ````config/dists````, ````updat
 ├── Release
 └── Release.gpg
 ````
-le deuxième champ de chaque ligne du fichier ````config/dist```` indique l'étiquette (chaine de caractères) à rechercher dans la version de chaque paquet pour que, si elle s'y trouve, ce paquet ne soit inclus que dans la distribution indiquée dans le premier champ.
+Le deuxième champ de chaque ligne du fichier ````config/dist```` indique l'étiquette (chaine de caractères) à rechercher dans la version de chaque paquet pour que, si elle s'y trouve, ce paquet ne soit inclus que dans la distribution indiquée dans le premier champ.
 Par exemple, les binaires PHP comprenant l'étiquette ````deb8```` ne sont inclus que dans les distributions de ````config/dists```` dont le deuxième champ est ````deb8````.
 
 Les architectures ````all```` et ````amd64```` qui apparaissent en suffixes des répertoires ````binary-all```` et ````binary-amd64```` sont, elles, extraites automatiquement des packages eux-mêmes.
-Si l'on introduisait par exemple dans ````sources```` des paquets pour l'architecture ````armh````, celle ci apparaitra automatiquement dans un répertoire ````binary-armh```` de l'arborescence de chaque distribution de ````dist````, à condition toutefois que la sélection ci-dessus par le deuxième champ de ````config/dists```` le permette.
+Si l'on introduisait par exemple dans ````sources```` des paquets pour l'architecture ````armh````, celle ci apparaitrait automatiquement dans un répertoire ````binary-armh```` de l'arborescence de chaque distribution de ````dist````, à condition toutefois que la sélection ci-dessus par le deuxième champ de ````config/dists```` le permette.
 
 Il est aussi possible de changer le nom du composant ````main```` en modifiant le contenu du fichier ````config/component````.
 
@@ -277,7 +275,7 @@ ou
 (de manière identique à ````prep.sh ver ...````).
 
 
-## Sauvegarde, restauration et fsck
+## Sauvegarde, restauration et "fsck"
 
 ### Sauvegarde
 
@@ -300,7 +298,7 @@ pour restaurer complètement les dépots APT.
 
 ### Refection des dépots APT (comme fsck pour les systèmes de fichier)
 
-La fabrique de dépots utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de ````sources/````, de ````docroot/prep/debs```` et de ````docroot/prod/debs````.
+La fabrique de dépots utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de ````sources/````, de ````docroot/prep/debs/```` et de ````docroot/prod/debs/````.
 Pour diverses raisons, il peut arriver que ces liens soient anormalement cassés.
 Les scripts de la fabrique ne fonctionneraient alors plus correctement.
 Mais la méthode utilisée pour la restauration s'applique. Il suffit de faire :

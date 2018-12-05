@@ -1,6 +1,14 @@
 ├── config
+│   ├── obsolete
+│   ├── component
 │   ├── dists
 │   └── relconf
+│
+├── gpg
+│   ├── genkey.sh
+│   ├── key.conf
+│   └── key.gpg
+│
 ├── sources
 │   ├── builds
 │   │   └── *.deb
@@ -8,7 +16,9 @@
 │   │   └── *.deb
 │   └── epibin
 │       └── *.deb
+│
 ├── docroot
+│   │
 │   ├── prep
 │   │   ├── debs
 │   │   │   ├── any
@@ -22,6 +32,7 @@
 │   │   │   └── deb9
 │   │   │       └── amd64
 │   │   │           └── *.deb
+│   │   │
 │   │   ├── dists
 │   │   │   ├── wheezy
 │   │   │   │   ├── main
@@ -66,6 +77,7 @@
 │   │   │   ├── zesty   = stretch
 │   │   │   └── artful  = stretch
 │   │   └── key.gpg
+│   │
 │   └── prod
 │       ├── debs
 │       │   ├── all
@@ -76,6 +88,7 @@
 │       │   │   └── *.deb
 │       │   └── amd64-deb9
 │       │       └── *.deb
+│       │
 │       ├── dists
 │       │   ├── wheezy
 │       │   │   ├── main
@@ -120,15 +133,11 @@
 │       │   ├── zesty   = stretch
 │       │   └── artful  = stretch
 │       └── key.gpg
-├── gpg
-│   ├── genkey.sh
-│   ├── key.conf
-│   └── key.gpg
 ├── tmp
-│   ├── deblist
-│   ├── relconf
 │   └── ...
+│
 ├── prep.sh
 ├── prod.sh
 ├── update.sh
+│
 └── update.log
