@@ -1,4 +1,4 @@
-finir README.md
+x finir README.md
 x correction de la detection d'already added
 x ajout deps apt-utils + dpkg-dev dans update.sh
 x export GPG keyring
