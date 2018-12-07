@@ -9,3 +9,5 @@ site/tmp
 test/share
 test/logs
 work
+.cache
+log

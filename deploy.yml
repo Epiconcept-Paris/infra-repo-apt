@@ -1,0 +1,52 @@
+---
+
+- hosts: files
+  gather_facts: True
+  become: True
+
+  vars:
+    path_dest: /space/www/apps/apt/
+    path_src: /space/applisdata
+
+  tasks:
+#    - name: création dossier
+#      file: 
+#        path: "{{ path_dest }}"
+#        state: directory
+#        mode: 0755
+
+    - name: copie des fichiers
+      tags: ['copy']
+      copy:
+        src: ./site/
+        dest: "{{ path_dest }}/"
+        mode: 0755
+        owner: epiconcept_build
+        group: www-data
+
+    - name: création sources
+      file: 
+        path: "{{ item }}"
+        state: directory
+        mode: 0755
+        owner: epiconcept_build
+        group: www-data
+      loop:
+        - "{{ path_dest }}/sources/"
+        - "{{ path_src }}/debian-build2"
+        - "{{ path_src }}/php"
+
+    - name: création liens
+      file: 
+        src: "{{ item.src }}"
+        dest: "{{ path_dest }}/sources/{{ item.nom }}"
+        state: link
+        mode: 0755
+        owner: epiconcept_build
+        group: www-data
+      loop:
+        - { src: "{{ path_src }}/php", nom: "php" }
+        - { src: "/space/www/apps/files/repositories_apt/epiconcept/deb/", nom: "olddir" }
+        #à activer quand on fera le vrai boulot
+        #- { src: "/home/travis/depot/", nom: "travis" }
+        #- { src: "{{ path_src }}/debian-build2", nom: "debian-build2" }
