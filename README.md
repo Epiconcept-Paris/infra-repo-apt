@@ -119,9 +119,9 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 - Passphrase: And there were gardens bright with sinuous rills
 	&nbsp; &nbsp; *(tirée du poème "Xanadu" de Coleridge)*
 
-**Il faut, au minumum, changer cette passphrase, du fait qu'elle est ici exposée publiquement**,
+**Il faut AU MINIMUM changer cette passphrase, du fait qu'elle est ici exposée publiquement**,
 
-par exemple avec les commandes suivantes :
+avant de générer le jeu de clés, par exemple avec les commandes suivantes :
 
 ````
 cd gpg
