@@ -43,7 +43,7 @@ if [ "$1" = 'list' -o "$1" = 'ver' ]; then
     fi
 fi
 # For list and update
-DebCmd="find $SrcDir -type f -name '*.deb' -links 1"
+DebCmd="find -L $SrcDir -type f -name '*.deb' -links 1"
 NewDeb=`eval $DebCmd | wc -l`
 
 #
