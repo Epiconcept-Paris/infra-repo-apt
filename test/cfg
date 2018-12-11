@@ -2,17 +2,34 @@
 #	cfg - Configure APT test
 #	Called as . /opt/share/cfg from container's root/.bashrc
 #
-Host='host.mydomain.tld'
-#Repo="http://$Host/apt/prep"
-Repo="http://$Host/apt/prod"
-File='/etc/hosts'
-grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
+test -f /opt/share/prod && Type='prod' || Type='prep'
+if [ -f /opt/share/local ]; then
+    Host='host.mydomain.tld'
+    Repo="http://$Host/apt/$Type"
+    echo "======= Configuring for localhost. Remove share/local if not wanted. ======="
+    File='/etc/hosts'
+    grep "$Host" $File >/dev/null || echo "172.17.0.1	$Host host" >>$File
+else
+    Host='apt.epiconcept.fr'
+    Repo="https://$Host/$Type"
+    echo "======= Configuring for $Host. Create an empty share/local file if not wanted. ======="
+    echo "Installing extra packages for apt HTTPS ..."
+    apt-get install -y --no-install-recommends ca-certificates apt-transport-https >/opt/share/apt-get.out
+fi
 File='/etc/apt/sources.list'
 grep "$Host" $File >/dev/null || echo "deb $Repo stretch main" >>$File
+
+echo "Fetching APT key from \"$Repo/key.gpg\" to /root ..."
+Key=/root/key.gpg
+curl -fsSL "$Repo/key.gpg" >$Key
 echo -n "Adding APT key: "
-curl -fsSL "$Repo/key.gpg" | apt-key add -
+apt-key add $Key
+
+echo "Running apt-get update:"
+apt-get update
+
 echo -n -e "Use:
     apt-key list		# to list APT trusted keys
-    apt-get update		# to fetch latest package list
+    apt-cache search <pattern>	# to look for specific packages
     apt-cache policy <package>	# to show all versions for <package>
 "
