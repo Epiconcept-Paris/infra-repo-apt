@@ -139,6 +139,12 @@ Quand le script se termine, le répertoire contient trois clés :
 
 Sur le serveur de dépots, après installation de ````signing.gpg````, seuls les fichiers ````key.conf```` et ````key.gpg```` sont nécessaires dans le répertoire ````gpg````.
 
+Enfin, si ce serveur de dépots est bien, comme recommandé, différent de celui où a été généré le jeu de clés GPG, il faut placer à la fin du fichier ````$HOME/.gnupg/gpg.conf```` de l'utilisateur qui exécutera les scripts les 2 lignes suivantes :
+````
+cert-digest-algo SHA256
+digest-algo SHA256
+````
+
 ### 2.3 Copie des fichiers
 
 Il faut copier dans un même répertoire sur le serveur de dépots :
