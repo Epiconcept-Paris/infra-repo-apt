@@ -20,27 +20,27 @@
   * code PHP d'une application
   * scripts utilitaires et cartographie propres à une nature de serveur (frontal, bdd, replication, etc...)
 
-* mini-framework de génération de paquets
-  * utilise des numéros de build comprenant la release debian. Ex: -2+deb9u1 -1+jessie8
-
 ## contraintes fonctionnelles
 
-* prévoir deux repositories : prod et preprod (prep)
-  * les paquets arrivent dans un certain nombre de sources répertoriées (build, travis, epi-php, autre à venir)
-  * le script update.sh (evolution de apt_deploy.sh) est invoqué (par une URL http) à chaque changement dans les sources et reconstruit le répertoire preprod
-  * une opération (cli) permet de lister les paquets qui sont en preprod et pas encore en production
-  * une autre opération (cli) permet de montrer le fichier dans le repo de prod ou de le retirer
-  * les urls auront apt.epiconcept.fr pour base, le reste est libre (ou chaque repo aura son propre virtualhost si c'est nécessaire, genre apt-prod et apt-preprod)
+* x mini-framework de génération de paquets
+  * x utilise des numéros de build comprenant la release debian. Ex: -2+deb9u1 -1+jessie8
 
-* permettre de garder plusieurs versions pour chaque paquet, et qu'elles soient toutes installables (pour assurer le rollback en cas de problème avec la nouvelle version)
-  * outils cli permettant de lister les différentes versions pour un paquet donné
-  * la politique de rétention sera à définir plus tard (hors périmètre du projet courant, sans doute par nature du contenu des paquets)
+* x prévoir deux repositories : prod et preprod (prep)
+  * x les paquets arrivent dans un certain nombre de sources répertoriées (build, travis, epi-php, autre à venir)
+  * x le script update.sh (evolution de apt_deploy.sh) est invoqué (par une URL http) à chaque changement dans les sources et reconstruit le répertoire preprod
+  * x une opération (cli) permet de lister les paquets qui sont en preprod et pas encore en production
+  * x une autre opération (cli) permet de montrer le fichier dans le repo de prod ou de le retirer
+  * x les urls auront apt.epiconcept.fr pour base, le reste est libre (ou chaque repo aura son propre virtualhost si c'est nécessaire, genre apt-prod et apt-preprod)
+
+* x permettre de garder plusieurs versions pour chaque paquet, et qu'elles soient toutes installables (pour assurer le rollback en cas de problème avec la nouvelle version)
+  * x outils cli permettant de lister les différentes versions pour un paquet donné
+  * ~ la politique de rétention sera à définir plus tard (hors périmètre du projet courant, sans doute par nature du contenu des paquets)
 
 * fonctionnalités
-  * les fichiers packages doivent être disponibles pour différentes versions Debian et Ubuntu (dont la liste sera dans un fichier texte ou plusieurs, stockés dans /etc/epiconcept/apt_repo/, variables liste_dist et liste_arch du script)
-  * les paquets propres à une version (uniquement les paquets PHP pour l'instant) ne devront être rendus disponibles que pour cette version
-  * le repo doit être signé pour que les paquets soient acceptés, et la clef disponible pour être déployée en même temps que le fichier /etc/apt/sources.list.d/epiconcept.list qui est déjà fait)
-  * l'accès aux packages et aux paquets sera limité soit sur l'IP, soit idéalement sur une authentification (si cela est possible pour APT) qui sera déposée sur chaque serveur (via le script de provisionning déjà existant à Epiconcept)
-  * les paquets prenant une place certaine, on peut utiliser des softs ou hard links pour éviter de dupliquer les fichiers
+  * x les fichiers packages doivent être disponibles pour différentes versions Debian et Ubuntu (dont la liste sera dans un fichier texte ou plusieurs, stockés dans /etc/epiconcept/apt_repo/, variables liste_dist et liste_arch du script)
+  * x les paquets propres à une version (uniquement les paquets PHP pour l'instant) ne devront être rendus disponibles que pour cette version
+  * x le repo doit être signé pour que les paquets soient acceptés, et la clef disponible pour être déployée en même temps que le fichier /etc/apt/sources.list.d/epiconcept.list qui est déjà fait)
+  * **l'accès aux packages et aux paquets sera limité soit sur l'IP, soit idéalement sur une authentification (si cela est possible pour APT) qui sera déposée sur chaque serveur (via le script de provisionning déjà existant à Epiconcept)**
+  * x les paquets prenant une place certaine, on peut utiliser des softs ou hard links pour éviter de dupliquer les fichiers
 
-* définir les dossiers à sauvegarder pour restaurer les données à l'identiques (dossier des paquets, éventuelles données à garder, etc...)
+* x définir les dossiers à sauvegarder pour restaurer les données à l'identiques (dossier des paquets, éventuelles données à garder, etc...)
