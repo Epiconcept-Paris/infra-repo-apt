@@ -23,6 +23,8 @@ if gpg -k | grep "^uid  *$Name <$Mail>$" >/dev/null; then
     fp=`gpg --fingerprint $Mail | sed -n 's/^ *Key fingerprint = //p' | tr -d ' '`
     gpg --batch --delete-secret-and-public-key $fp
 fi
+Conf=$HOME/.gnupg/gpg.conf
+grep 'digest-algo SHA256' $Conf >/dev/null || echo "cert-digest-algo SHA256\ndigest-algo SHA256" >>$Conf
 
 #   Generate new keys
 echo "Please generate entropy with 'sudo grep -Lr SomeImpossibleString /'..."
@@ -38,5 +40,4 @@ gpg -a --export-secret-subkeys $Mail >signing.gpg
 #   Export the public subkey key.gpg to be copied in each repository,
 #	downloaded by the APT client and passed to apt-key add
 #
-Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
 gpg -a --export $Mail >key.gpg				# for apt-key on clients
