@@ -8,11 +8,7 @@ RUN $ADDUSER
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
 RUN echo "export TERM=xterm\nalias l='ls -Al'\ntest -f /opt/share/cfg && . /opt/share/cfg" >>/root/.bashrc
 
-# Update/upgrade
-RUN apt-get update
-RUN apt-get upgrade -y
-
-# Tools and build deps
-RUN apt-get install -y --no-install-recommends vim file net-tools curl gnupg
+# Update/upgrade, install tools
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends vim file net-tools curl gnupg
 
 CMD [ "/bin/bash" ]
