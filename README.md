@@ -329,4 +329,4 @@ Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin
 
 Le conteneur partage le répertoire ````test/share```` et lance automatiquement le script ````test/cfg````, également visible dans ````share```` par un hardlink.
 
-Enfin ce dépot git contient aussi le script ````bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.
+Enfin ce dépot git contient aussi le script ````test/bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.

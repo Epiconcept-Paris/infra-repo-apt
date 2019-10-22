@@ -8,21 +8,20 @@ Prg=`basename $0`
 Hdrx=(Path File Size Links Inod MD5 SHA1 SHA256)
 Hlpx=(Filepath Filename FileSize Hardlinks Inode MD5sum SHA1sum SHA256sum)
 nHx=${#Hdrx[*]}
-Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Desc Maint Home Source Instsz Confl Break Prov Predeps Deps)
-Fmts=([$nHx]=Package Version Architecture Section Priority Origin Description Maintainer Homepage Source Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
-# omited: Recommends Replaces Suggests
-Abrs=(F f z h i m 1 2 n v a s p o c M H S Z C B P D d)
+Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Summ Desc Maint Home Source Stat Instsz Confl Break Prov Predeps Deps)
+Fmts=([$nHx]=Package Version Architecture Section Priority Origin binary:Summary Description Maintainer Homepage Source db:Status-Abbrev Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
+# non-(internal) omitted: Bugs Enhances Essential Recommends Replaces Suggests
+Abrs=(F f z h i m 1 2 n v a s p o k c M H S t Z C B P D d)
 declare -A StFs
 StFs=([z]=s [h]=h [i]=i)
-Format="%n	%v	%a\n"
-Sep='	'
 
 #   Usasge [<exit-code>]
 Usage()
 {
     echo "Display debian package(s) control fields" >&2
-    echo -e "Usage:\t$Prg [-f format-string | -a] [-r] [-s separator] [package-file ...]" >&2
+    echo -e "Usage:\t$Prg [-f format-string | -a [-d]] [-r] [-s separator] [package-file ...]" >&2
     echo -e "\t-a sets format-string to display all existing fields (except Path)" >&2
+    echo -e "\t-d full Description with -a, not just Summary" >&2
     echo -e "\t-r suppresses the header" >&2
     echo -e "\t$Prg -H will list %<x> format specifiers" >&2
     echo "If no package-file is specified, installed packages will be displayed"
@@ -41,7 +40,9 @@ FmtHelp()
     echo "  Files and installed packages:"
     for idx in "${!Hdrs[@]}"
     do
-	echo "    %${Abrs[$idx]}  ${Fmts[$idx]}"
+	v=`expr "${Fmts[$idx]}" : '.*:\(.*\)'`
+	test "$v" || v="${Fmts[$idx]}"
+	echo "    %${Abrs[$idx]}  $v"
     done
     return;
 }
@@ -81,18 +82,25 @@ sums()
 
 # Main
 #   Parse args
-while getopts 'af:hrs:H' opt
+Sep='	'
+while getopts 'af:hrds:H' opt
 do
     case $opt in
 	f)  Format="$OPTARG"	;;
 	s)  Sep="$OPTARG"	;;
 	a)  fmtAll=y;;
 	r)  noHdr=y;;
+	d)  fDesc=y;;
 	H)  FmtHelp; exit 0;;
 	h)  Usage 0;;	# help
 	\?) Usage 1;;	# error
     esac
 done
+test "$Format" || Format="%n$Sep%v$Sep%a$Sep%k\n"
+if [ "$fDesc" -a -z "$fmtAll" ]; then
+    echo "$Prg: discarding -d option not used with -a" >&2
+    fDesc=
+fi
 shift `expr $OPTIND - 1`
 test $# -gt 0 && onFiles=y
 
@@ -103,13 +111,15 @@ if [ "$fmtAll" ]; then
     if [ "$onFiles" ]; then
 	for idx in "${!Hdrx[@]}"
 	do
-	    test ${Abrs[$idx]} = 'F' && continue
+	    test ${Abrs[$idx]} = 'F' && continue	# Path
 	    Format="$Format$s%${Abrs[$idx]}"
 	    s="$Sep"
 	done
     fi
     for idx in "${!Hdrs[@]}"
     do
+	test ${Abrs[$idx]} = 'c' -a -z "$fDesc" && continue	# Description
+	test ${Abrs[$idx]} = 'k' -a "$fDesc" && continue	# Summary
 	Format="$Format$s%${Abrs[$idx]}"
 	s="$Sep"
     done
