@@ -8,6 +8,7 @@ Prg=`basename $0`
 
 # See tree.txt for wanted and required directory tree
 CfgDir=config
+GpgDir=gpg
 SrcDir=sources
 DocDir=docroot
 RepDir=$DocDir/prep
@@ -42,7 +43,7 @@ if [ "$1" = 'list' -o "$1" = 'ver' ]; then
 	exit 4
     fi
 fi
-# For list and update
+# Count single-hardlink sources for list and update
 DebCmd="find -L $SrcDir -type f -name '*.deb' -links 1"
 NewDeb=`eval $DebCmd | wc -l`
 
@@ -53,16 +54,19 @@ if [ "$1" = 'list' ]; then
     find $DebDir -type f -name '*.deb' -links 2 | sed 's;.*/;;' | sort
     test $NewDeb -gt 0 && echo "$Prg: also found $NewDeb unprocessed source package(s) (new or obsolete)" >&2
     exit 0
+fi
 #
 #   ver
+#	TmpDir files: deblist, deblook
 #
-elif [ "$1" = 'ver' ]; then
+mkdir -p $TmpDir
+if [ "$1" = 'ver' ]; then
     find $DebDir -type f -name '*.deb' | sed "s;$DebDir/;;" | sort >$TmpDir/deblist
-    if [ "$2" ]; then
+    if [ "$2" ]; then	# package name given: display all versions
 	expr "$2" : '.*/' >/dev/null && key="^$2" || key="/$2"
 	expr "$2" : '.*_' >/dev/null || key="${key}_"
 	grep "$key" $TmpDir/deblist | sed 's;.*/;;'
-    else	# display all packages names that have multiple versions
+    else		# display all packages names that have multiple versions
 	awk -F_ '{print $1}' $TmpDir/deblist | sort >$TmpDir/deblook
 	sort -u $TmpDir/deblook | diff $TmpDir/deblook - | sed -n 's/^< //p' | sed 's;.*/;;'
 	rm $TmpDir/deblook
@@ -73,23 +77,40 @@ fi
 
 #
 #   update
+#	TmpDir files: deblist
 #
+# Before any work, make sure we have a signing key (same code as in update.sh)
+Mail="`sed -n 's/^Name-Email: //p' $GpgDir/key.conf`"
+Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
+if [ -z "$Sign" ]; then
+    echo "$Prg: no signing key available" >&2
+    echo "\t did you run a 'sudo -u `id -nu` gpg --import $GpgDir/signing.gpg' ?" >&2
+    exit 2
+fi
+
+# First, add single-hardlink packages from $SrcDir
 exec 2>>$Log
 nbAdd=0
 if [ $NewDeb -gt 0 ]; then
-    # Link new packages to prep/
-    mkdir -p $TmpDir
     date "+---- %Y-%m-%d %H:%M:%S - prep --------------------------------------------" >&2
     eval $DebCmd >$TmpDir/deblist
     while read deb
     do
-	File=`basename $deb`
-	eval `stat -c 'Size=%s' $deb`
+	# Check if our $deb is still there (Travis handling as of oct 2019)
+	if ! [ -s "$deb" ]; then
+	    echo "\aCannot find previously existing $deb - Aborting" | tee -a $Log
+	    echo "\t File may have been suppressed during run, please try again"
+	    exit 5
+	fi
+	# We want to create the link from the actual package info, not from the deb filename
 	# Only dpkg-deb -f without tag returns package names unchanged (e.g.: in uppercase)
 	# The sed command below assumes (reasonably so) that the tag values do not contain spaces
 	eval `dpkg-deb -f $deb | sed -n -e 's/Package: /Name=/p' -e 's/Version: /Vers=/p' -e 's/Architecture: /Arch=/p' | tr '\n' ' '`
-	#echo "File=$File Size=$Size Name=$Name Vers=$Vers Arch=$Arch"
-	if [ $Arch = 'amd64' ]; then
+	eval `stat -c 'Size=%s sDev=%D' $deb`
+	#echo "File=`basename $deb` sDev=$sDev Size=$Size Name=$Name Vers=$Vers Arch=$Arch"
+
+	# Skip amd64 packages declared as obsolete
+	if [ $Arch = 'amd64' ]; then	# For performance
 	    skip=
 	    while read RegExp rest
 	    do
@@ -97,34 +118,55 @@ if [ $NewDeb -gt 0 ]; then
 		echo "$Name" | grep "^$RegExp" >/dev/null && { skip=y; break; }
 	    done <$CfgDir/obsolete
 	    if [ "$skip" ]; then
-		echo "Skipping obsolete package '$File'" >&2
+		echo "Skipping obsolete package '$deb'" >&2
 		continue
 	    fi
 	fi
+
+	# Make $ArchDir if needed and check its filesystem
 	DebVer=`expr "$Vers" : '.*+\(deb[1-9][0-9]*\)$'` || DebVer='any'
 	ArchDir=$DebDir/$DebVer/$Arch
+	mkdir -p $ArchDir
+	if [ "$sDev" != "`stat -c '%D' $ArchDir`" ]; then
+	    echo "\aSource $deb and prep $ArchDir/ are on != filesystems - Aborting" | tee -a $Log
+	    exit 6
+	fi
+
+	# Check if our link target already exists (it should not)
 	Pkg=${Name}_${Vers}_$Arch.deb
 	if [ -f $ArchDir/$Pkg ]; then
-	    eval `stat -c 'iNum=%i PrSz=%s' $ArchDir/$Pkg`
-	    prev=`find $SrcDir -inum $iNum`
-	    if cmp $deb $prev >/dev/null; then
-		echo "Skipping package $deb already added from `dirname $prev`" >&2
+	    # Yes, find more about it
+	    eval `stat -c 'pkSz=%s nbLk=%h iNum=%i' $ArchDir/$Pkg`
+	    # Does it already exist as other inode in $SrcDir ?
+	    prev=; test "$nbLk" -gt 1 && prev=`find $SrcDir -inum $iNum`
+	    # Are files identical ? For performance, only cmp if sizes are =
+	    same=; test "$Size" -eq "$pkSz" && cmp $deb $ArchDir/$Pkg >/dev/null && same=y
+	    if [ "$same" ]; then
+		test "$nbLk" -gt 1 && what="link (iNum=$iNum)" || what='file'
+		echo "Removing stale $what $ArchDir/$Pkg identical to $deb" >&2
+		rm $ArchDir/$Pkg
+	    elif [ "$prev" ]; then
+	    	# No: other source with same internal name ??
+		echo "\aPackage $deb has same name $Pkg as $prev - Aborting" | tee -a $Log
+		exit 6
 	    else
-		echo "Package $deb (sz=$Size) already added from `dirname $prev` (sz=$PrSz)" >&2
+		echo "Skipping $deb (sz=$Size) as $ArchDir/$Pkg already exists (sz=$pkSz)" | tee -a $Log
+		continue
 	    fi
-	    continue
 	fi
-	test $File = $Pkg || echo "Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
-	mkdir -p $ArchDir
+
+	# Link new package to prep/
 	test $nbAdd -eq 0 && echo "Adding files to $RepDir ..."
 	ln $deb $ArchDir/$Pkg
+	test "`basename $deb`" = "$Pkg" || echo "Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
 	nbAdd=`expr $nbAdd + 1`
     done <$TmpDir/deblist
     rm $TmpDir/deblist
 fi
 (test $nbAdd -eq 0 && echo "No new packages found." || echo "$nbAdd packages added.") | tee -a $Log
 
-#   Remove .debs whose source was deleted
+# Then, remove any prod .debs whose source was deleted
+#	TmpDir files: prodprep
 if [ -d $DocDir/prod/debs ]; then
     find $DocDir/prod/debs -type f -name '*.deb' -links -3 >$TmpDir/prodprep
     if [ -s $TmpDir/prodprep ]; then
@@ -136,7 +178,10 @@ if [ -d $DocDir/prod/debs ]; then
     fi
     rm $TmpDir/prodprep
 fi
-#   We don't keep our possible nbDel as it was production packages, not ours
+
+# Last, remove now prep .debs whose source was deleted
+#	TmpDir files: preponly
+#   We don't keep the previoud possible nbDel as it was of prod packages, not prep
 nbDel=0
 find $DebDir -type f -name '*.deb' -links -2 >$TmpDir/preponly
 if [ -s $TmpDir/preponly ]; then

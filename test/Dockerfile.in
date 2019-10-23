@@ -1,6 +1,7 @@
-FROM debian:stretch
-MAINTAINER Epiconcept
+FROM debian:$DEBVER
+LABEL maintainer Epiconcept
 
+ENV DEBVER=$DEBVER
 ENV USER=$USER
 ENV LANG=C
 ENV TZ=Europe/Paris
@@ -9,6 +10,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
 RUN echo "export TERM=xterm\nalias l='ls -Al'\ntest -f /opt/share/cfg && . /opt/share/cfg" >>/root/.bashrc
 
 # Update/upgrade, install tools
-RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends vim file net-tools curl gnupg
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends apt-utils gnupg vim file net-tools curl
+COPY bin/debinfo /usr/local/bin
 
 CMD [ "/bin/bash" ]

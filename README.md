@@ -325,8 +325,15 @@ pour rétablir le fonctionnement normal.
 
 Ce dépot git contient également un répertoire ````test```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
 
-Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image.
+Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image. Cette commande est également copiée dans ````logs/run-${DebVer:-stretch}.sh````.
+Il est possible de créer une image docker sous une autre version de Debian par la variable d'environnement **DebVer**, par exemple : ````DebVer=jessie test/bake```` (attention, la validité de la version Debian n'est pas vérifiée, mais ````test/bake```` s'arrêtera en cas d'erreur de build de l'image docker.
 
-Le conteneur partage le répertoire ````test/share```` et lance automatiquement le script ````test/cfg````, également visible dans ````share```` par un hardlink.
-
-Enfin ce dépot git contient aussi le script ````test/bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui ne l'utilise pas.
+Le conteneur partage le répertoire ````test/share````, vu en interne comme ````/opt/share````, et lance automatiquement le script ````test/cfg```` par le biais d'un hardlink dans ````test/share````.
+Ce script utilise par défaut les dépots Epiconcept ````https://apt.epiconcept.fr/prep (ou /prod)````, mais il est possible de tester le dépot local de la façon suivante :
+````
+dpkg -C apache2 2>&1 | grep 'not installed$' >/dev/null && sudo apt-get install apache2
+sudo ln -s `realpath site/docroot` /var/www/html/apt
+>test/share/local
+test/bake
+````
+Enfin ce dépot git contient aussi le script ````test/bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépots APT, qui n'est utilisé que dans l'image de test pour lister les packages à la fin de ````test/cfg````.

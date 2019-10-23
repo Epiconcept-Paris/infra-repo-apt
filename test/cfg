@@ -2,8 +2,9 @@
 #	cfg - Configure APT test
 #	Called as . /opt/share/cfg from container's root/.bashrc
 #
-test -f /opt/share/prod && Type='prod' || Type='prep'
-if [ -f /opt/share/local ]; then
+Dir=/opt/share
+test -f $Dir/prod && Type='prod' || Type='prep'
+if [ -f $Dir/local ]; then
     Host='host.mydomain.tld'
     Repo="http://$Host/apt/$Type"
     echo "======= Configuring for localhost. Remove share/local if not wanted. ======="
@@ -14,10 +15,12 @@ else
     Repo="https://$Host/$Type"
     echo "======= Configuring for $Host. Create an empty share/local file if not wanted. ======="
     echo "Installing extra packages for apt HTTPS ..."
-    apt-get install -y --no-install-recommends ca-certificates apt-transport-https >/opt/share/apt-get.out
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates apt-transport-https >$Dir/apt-get-$DEBVER.out
 fi
-File='/etc/apt/sources.list'
-grep "$Host" $File >/dev/null || echo "deb $Repo stretch main" >>$File
+# On jessie, 'all' is not considered as a default architecture
+test "$DEBVER" = 'jessie' && Arch="[arch=`uname -r | sed 's/^.*-//'`,all] "
+Src='/etc/apt/sources.list.d/epiconcept.list'
+grep "$Host" $Src >/dev/null 2>&1 || echo "deb $Arch$Repo $DEBVER main" >>$Src
 
 echo "Fetching APT key from \"$Repo/key.gpg\" to /root ..."
 Key=/root/key.gpg
@@ -27,6 +30,8 @@ apt-key add $Key
 
 echo "Running apt-get update:"
 apt-get update
+debinfo -a -s'|' >$Dir/pkgs0-$DEBVER
+chown $USER:$USER $Dir/apt-get-$DEBVER.out $Dir/pkgs0-$DEBVER
 
 echo -n -e "Use:
     apt-key list		# to list APT trusted keys

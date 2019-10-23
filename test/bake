@@ -4,16 +4,15 @@
 #
 #	Usage:	bake
 #
-Prg=tools/`basename $0`
+Prg=test/`basename $0`
 Dir=`dirname $0`
 IniPwd=$PWD
-TopDir=../
 TstTop=
 
 Path() { realpath --relative-to=$IniPwd $1; }
 test "$Dir" || Dir=`dirname \`realpath $0\``
 expr "$Dir" : / >/dev/null && Dir=`Path $Dir`
-test "$Dir" = '.' || cd "$Dir"
+test "$Dir" = '.' && Dir='' || { cd "$Dir"; Dir="$Dir/"; }
 #   Script's CWD is where it is located, but all messages assume PWD is top-level
 Logs=${TstTop}logs
 Share=${TstTop}share
@@ -26,6 +25,7 @@ if [ $# -ge 1 ]; then
     exit 1
 fi
 
+DebVer=${DebVer:-stretch}
 User=`id -un`
 AddUser="groupadd -g `id -g` `id -gn`; useradd -u `id -u` -g `id -g` $User"
 
@@ -33,11 +33,10 @@ AddUser="groupadd -g `id -g` `id -gn`; useradd -u `id -u` -g `id -g` $User"
 #   Build the image
 #
 APTST_BASE=epi-apt-test
-APTST_IMG=$APTST_BASE:stretch
+APTST_IMG=$APTST_BASE:$DebVer
 APTST_NAME=epi_apt_test
 date '+===== %Y-%m-%d %H:%M:%S %Z =================='
 Now=`date '+%s'`
-
 
 if docker ps | grep $APTST_NAME >/dev/null; then
     echo "Stopping the running '$APTST_NAME' container..."
@@ -60,13 +59,19 @@ mkdir -p $Logs $Share
 test -f $Share/cfg || ln ${TstTop}cfg share
 echo "Building the '$APTST_IMG' image..."
 #   Variables come in order of their appearance in Dockerfile.in
-USER="$User" ADDUSER="$AddUser" envsubst '$USER $ADDUSER' <${TstTop}Dockerfile.in | tee $Logs/Dockerfile | docker build -f - -t $APTST_IMG . >$Logs/docker.out 2>&1
+DEBVER="$DebVer" USER="$User" ADDUSER="$AddUser" envsubst '$DEBVER $USER $ADDUSER' <${TstTop}Dockerfile.in | tee $Logs/Dockerfile-$DebVer | docker build -f - -t $APTST_IMG . >$Logs/docker-$DebVer.out 2>&1
+if [ $? -ne 0 ]; then
+    echo "$Prg: docker build FAILED\a!" >&2
+    exit 2
+fi
 
 #
 #   Run the container
 #
 Cmd="docker run -ti -v `realpath $Share`:/opt/share --name $APTST_NAME --rm $APTST_IMG"
-echo "Use:\n    $Cmd\nto run the APT test container"
+echo "Use:\n    $Cmd\nto run the APT test container (or $Dir$Logs/run-$DebVer.sh)"
+echo "#!/bin/sh\n\nexec $Cmd" >$Logs/run-$DebVer.sh
+chmod +x $Logs/run-$DebVer.sh
 
 #
 #   End
