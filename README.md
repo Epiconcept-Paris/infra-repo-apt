@@ -326,7 +326,7 @@ pour rétablir le fonctionnement normal.
 Ce dépot git contient également un répertoire ````test```` permettant de créer une image docker sous Debian 'stretch' de tests de ````apt-get````.
 
 Pour créer l'image, lancer la commande ````test/bake````, qui affiche à la fin la commande d'invocation du conteneur de l'image. Cette commande est également copiée dans ````logs/run-${DebVer:-stretch}.sh````.
-Il est possible de créer une image docker sous une autre version de Debian par la variable d'environnement **DebVer**, par exemple : ````DebVer=jessie test/bake```` (attention, la validité de la version Debian n'est pas vérifiée, mais ````test/bake```` s'arrêtera en cas d'erreur de build de l'image docker.
+Il est possible de créer une image docker sous une autre version de Debian par la variable d'environnement **DebVer**, par exemple : ````DebVer=jessie test/bake```` (attention, la validité de la version Debian n'est pas vérifiée, mais ````test/bake```` s'arrêtera en cas d'erreur de build de l'image docker).
 
 Le conteneur partage le répertoire ````test/share````, vu en interne comme ````/opt/share````, et lance automatiquement le script ````test/cfg```` par le biais d'un hardlink dans ````test/share````.
 Ce script utilise par défaut les dépots Epiconcept ````https://apt.epiconcept.fr/prep (ou /prod)````, mais il est possible de tester le dépot local de la façon suivante :
