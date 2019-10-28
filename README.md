@@ -337,3 +337,16 @@ sudo ln -s `realpath site/docroot` /var/www/html/apt
 test/bake
 ````
 Enfin ce dépôt git contient aussi le script ````test/bin/debinfo```` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépôts APT, qui n'est utilisé que dans l'image de test pour lister les packages à la fin de ````test/cfg````.
+
+## 6 Déploiement manuel
+
+* import de la clef
+```console
+curl https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
+```
+
+* configuration repository dans  (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
+```apt
+deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ jessie main
+deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ bionic main
+```
