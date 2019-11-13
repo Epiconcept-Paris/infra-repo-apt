@@ -345,7 +345,7 @@ Enfin ce dépôt git contient aussi le script ````test/bin/debinfo```` qui n'est
 curl https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
 ```
 
-* configuration repository dans  (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
+* configuration repository dans /etc/apt/sources.list.d/epiconcept.list (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
 ```apt
 deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ jessie main
 deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ bionic main
