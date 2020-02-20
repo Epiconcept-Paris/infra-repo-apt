@@ -44,7 +44,6 @@ FmtHelp()
 	test "$v" || v="${Fmts[$idx]}"
 	echo "    %${Abrs[$idx]}  $v"
     done
-    return;
 }
 
 #   Index <array> <value>
