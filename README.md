@@ -340,9 +340,9 @@ Enfin ce dépôt git contient aussi le script `test/bin/debinfo` qui n'est qu'un
 
 ## 6 Déploiement manuel
 
-* Import de la clé
+* Import de la clé (l'auth n'est pas nécessaire au sein de l'infra epiconcept)
 ```console
-curl https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
+curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
 ```
 
 * Configuration du repository dans /etc/apt/sources.list.d/epiconcept.list (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
