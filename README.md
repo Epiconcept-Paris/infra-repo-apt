@@ -346,7 +346,10 @@ curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key 
 ```
 
 * Configuration du repository dans /etc/apt/sources.list.d/epiconcept.list (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
-```apt
-deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ jessie main
-deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ bionic main
+```
+deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ <release> main
+```
+ce qui peut se faire ainsi
+```
+echo "deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/epiconcept.list
 ```
