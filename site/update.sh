@@ -114,7 +114,7 @@ do
     apt-ftparchive -c $TmpDir/relconf release $DistDir >$DistDir/Release
 
     # Sign the release file
-    sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --batch -o Release.gpg Release)
+    sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --clearsign --pinentry-mode=loopback --batch -o Release.gpg Release)
 done <$CfgDir/dists
 #
 #   Done !
