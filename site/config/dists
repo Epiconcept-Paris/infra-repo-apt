@@ -20,3 +20,7 @@ disco	deb10
 eoan	deb10
 bullseye deb11
 focal	deb11
+buster  deb10
+groovy  deb10
+hirsute deb10
+impish  deb10
