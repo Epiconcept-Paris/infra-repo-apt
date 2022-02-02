@@ -355,5 +355,5 @@ echo "deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ $(lsb_release -sc) ma
 ```
 Il faut (hors de notre infra) ajouter l'authentification (en Debian 9 j'ai dû mettre dans /etc/apt/auth.conf pour que ça marche, il faut peut être inclure auth.conf.d ?)
 ```
-echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
+echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
 ```
