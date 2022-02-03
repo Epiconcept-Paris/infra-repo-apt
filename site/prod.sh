@@ -12,7 +12,7 @@ PreDir=$DocDir/prep/debs
 RepDir=$DocDir/prod
 DebDir=$RepDir/debs
 TmpDir=tmp
-Log=update.log
+Log=/var/log/epiconcept/aptv2.prod.log
 
 Usage()
 {
