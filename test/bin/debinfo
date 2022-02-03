@@ -8,10 +8,10 @@ Prg=`basename $0`
 Hdrx=(Path File Size Links Inod MD5 SHA1 SHA256)
 Hlpx=(Filepath Filename FileSize Hardlinks Inode MD5sum SHA1sum SHA256sum)
 nHx=${#Hdrx[*]}
-Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Summ Desc Maint Home Source Stat Instsz Confl Break Prov Predeps Deps)
-Fmts=([$nHx]=Package Version Architecture Section Priority Origin binary:Summary Description Maintainer Homepage Source db:Status-Abbrev Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
+Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Summ Desc Maint Home Source Stat LastMod Instsz Confl Break Prov Predeps Deps)
+Fmts=([$nHx]=Package Version Architecture Section Priority Origin binary:Summary Description Maintainer Homepage Source db:Status-Abbrev db-fsys:Last-Modified Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
 # non-(internal) omitted: Bugs Enhances Essential Recommends Replaces Suggests
-Abrs=(F f z h i m 1 2 n v a s p o k c M H S t Z C B P D d)
+Abrs=(F f z h i m 1 2 n v a s p o k c M H S t T Z C B P D d)
 declare -A StFs
 StFs=([z]=s [h]=h [i]=i)
 
