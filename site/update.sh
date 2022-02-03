@@ -8,6 +8,12 @@ CfgDir=config
 GpgDir=gpg
 TmpDir=tmp
 
+now()
+{
+    # Timestamps: just comment-out next line to remove them
+    date '+[%Y-%m-%d %H:%M:%S] '
+}
+
 # Compo is the subdir we want in each dist, exactly as it appears
 # after the dist name in /etc/apt/sources.list on APT clients
 Compo=`cat $CfgDir/component`
@@ -40,7 +46,7 @@ fi
 
 #   We want our paths relative, so move to our top directory
 if ! [ -f $CfgDir/dists -a -f $CfgDir/relconf -a -f $GpgDir/key.gpg ]; then
-    cd `dirname $0`
+    cd $(dirname $0)
     if ! [ -f $CfgDir/dists -a -f $CfgDir/relconf -a -f $GpgDir/key.gpg ]; then
 	echo "$Prg: cannot find $CfgDir/dist, $CfgDir/relconf and $GpgDir/key.gpg files"
 	exit 2
@@ -51,44 +57,21 @@ fi
 #   First step: generate the Packages files
 #
 DebDir=$RepDir/debs
-for DebArch in `ls -d $DebDir/*/*`
+for DebArch in $(ls -d $DebDir/*/*)
 do
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Generating $DebArch/override" >&2
+    echo "$(now)Generating $DebArch/override" >&2
     for deb in $DebArch/*.deb
     do
 	basename $deb | sed 's/_.*$/ optional base/'
     done | sort -u >$DebArch/override
 
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Processing $DebArch ..." >&2
-    ArchDir=`expr $DebArch : "$RepDir/\(.*\)"`
+    echo "$(now)Processing $DebArch ..." >&2
+    ArchDir=$(expr $DebArch : "$RepDir/\(.*\)")
     # Paths in Packages must be relative to $RepDir
-
-    echo "repdir $RepDir"
-    echo "archdir $ArchDir"
-    echo "override $DebArch/override"
-
-
-    if [ -f "$ArchDir/Packages" ]; then
-	    tmpbase=/tmp/diffdpkg
-	    (cd $RepDir; find $ArchDir -type f ! -name Packages |sort) > $tmpbase/fichiers
-	    (cd $RepDir; grep ^Filename $ArchDir/Packages |sed 's/.*: //' |sort > $tmpbase/catalogue
-	    (cd $RepDir; comm -23 $tmpbase/fichiers $tmpbase/catalogue > $tmpbase/nouveaux
-	    #todo ici gerer les paquets retires
-
-	    tmplnk=$tmpbase/lnk
-	    tmppath=$tmplnk/debs/any/amd64
-	    rm -rf $tmplnk
-	    mkdir -p $tmppath
-	    for file in $(cat $tmpbase/nouveaux); do 
-		    ln -s $(realpath $RepDir/$file) $tmppath/
-	    done
-	    (cd $tmplnk; dpkg-scanpackages -m $ArchDir $(realpath $RepDir/$ArchDir/override > /tmp/${ArchDir}_Packages)
-    else 
-	(cd $RepDir; dpkg-scanpackages -m $ArchDir $ArchDir/override >$ArchDir/Packages)
-    fi
-    #rm $DebArch/override
+    (cd $RepDir; dpkg-scanpackages -m $ArchDir $ArchDir/override >$ArchDir/Packages)
+    rm $DebArch/override
     
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Processing $DebArch ended" >&2
+    echo "$(now)Processing $DebArch ended" >&2
 done
 
 #
@@ -101,7 +84,7 @@ Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
 
 while read Dist BinDir
 do
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Updating '$Dist' distribution" >&2
+    echo "$(now)Updating '$Dist' distribution..." >&2
     DistDir=$RepDir/dists/$Dist
     CompDir=$DistDir/$Compo
 
@@ -140,7 +123,7 @@ do
 
     # Sign the release file
     sed -n 's/^Passphrase: //p' $GpgDir/key.conf | (cd $DistDir; rm -f Release.gpg; gpg -sab --default-key $Sign --passphrase-fd 0 --pinentry-mode=loopback --batch -o Release.gpg Release)
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Updating '$Dist' distribution ended" >&2
+    echo "$(now)Updated '$Dist' distribution." >&2
 done <$CfgDir/dists
 #
 #   Done !
