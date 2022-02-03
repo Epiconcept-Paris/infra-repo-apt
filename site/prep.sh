@@ -22,6 +22,12 @@ Usage()
     exit 1
 }
 
+now()
+{
+    # Timestamps: just comment-out next line to remove them
+    date '+[%Y-%m-%d %H:%M:%S] '
+}
+
 test "$1" = 'update' -o "$1" = 'list' -o "$1" = 'ver' || Usage
 
 #   We want our paths relative, so move to our top directory
@@ -85,7 +91,7 @@ fi
 exec 2>>$Log
 nbAdd=0
 if [ $NewDeb -gt 0 ]; then
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Link new packages to prep/" >&2
+    echo "$(now)Link new packages to prep/" >&2
     mkdir -p $TmpDir
     date "+---- %Y-%m-%d %H:%M:%S - prep --------------------------------------------" >&2
     eval $DebCmd >$TmpDir/deblist
@@ -96,7 +102,7 @@ if [ $NewDeb -gt 0 ]; then
 	# Only dpkg-deb -f without tag returns package names unchanged (e.g.: in uppercase)
 	# The sed command below assumes (reasonably so) that the tag values do not contain spaces
 	eval `dpkg-deb -f $deb | sed -n -e 's/Package: /Name=/p' -e 's/Version: /Vers=/p' -e 's/Architecture: /Arch=/p' | tr '\n' ' '`
-	echo "$(date +'[%Y-%m-%d %H:%M:%S] ') File=$File Size=$Size Name=$Name Vers=$Vers Arch=$Arch" >&2
+	echo "$(now)File=$File Size=$Size Name=$Name Vers=$Vers Arch=$Arch" >&2
 	if [ $Arch = 'amd64' ]; then
 	    skip=
 	    while read RegExp rest
@@ -105,7 +111,7 @@ if [ $NewDeb -gt 0 ]; then
 		echo "$Name" | grep "^$RegExp" >/dev/null && { skip=y; break; }
 	    done <$CfgDir/obsolete
 	    if [ "$skip" ]; then
-                echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Skipping obsolete package '$File'" >&2
+                echo "$(now)Skipping obsolete package '$File'" >&2
 		continue
 	    fi
 	fi
@@ -116,34 +122,34 @@ if [ $NewDeb -gt 0 ]; then
 	    eval `stat -c 'iNum=%i PrSz=%s' $ArchDir/$Pkg`
 	    prev=`find $SrcDir -inum $iNum`
 	    if [ -z "$prev" ]; then
-    	        echo "$(date +'[%Y-%m-%d %H:%M:%S] ') $Prg: cannot find inum=$iNum in $SrcDir for $ArchDir/$Pkg (size=$PrSz)" >&2
+    	        echo "$(now)$Prg: cannot find inum=$iNum in $SrcDir for $ArchDir/$Pkg (size=$PrSz)" >&2
 		#echo "\tAborting. File may have been suppressed during run, please try again"
 		#exit 5
 	    elif cmp $deb $prev >/dev/null; then
-		echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Skipping package $deb already added from `dirname $prev`" >&2
+		echo "$(now)Skipping package $deb already added from `dirname $prev`" >&2
 	    else
-		echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Package $deb (sz=$Size) already added from `dirname $prev` (sz=$PrSz)" >&2
+		echo "$(now)Package $deb (sz=$Size) already added from `dirname $prev` (sz=$PrSz)" >&2
 	    fi
 	    continue
 	fi
-	test $File = $Pkg || echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
+	test $File = $Pkg || echo "$(now)Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
 	mkdir -p $ArchDir
-	test $nbAdd -eq 0 && echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Adding files to $RepDir ..." >&2
+	test $nbAdd -eq 0 && echo "$(now)Adding files to $RepDir ..." >&2
 	ln $deb $ArchDir/$Pkg
 	nbAdd=`expr $nbAdd + 1`
     done <$TmpDir/deblist
     rm $TmpDir/deblist
 fi
-(test $nbAdd -eq 0 && echo "$(date +'[%Y-%m-%d %H:%M:%S] ') No new packages found." || echo "$(date +'[%Y-%m-%d %H:%M:%S] ') $nbAdd packages added.") | tee -a $Log
+(test $nbAdd -eq 0 && echo "$(now)No new packages found." || echo "$(now)$nbAdd packages added.") | tee -a $Log
 
 #   Remove .debs whose source was deleted
 if [ -d $DocDir/prod/debs ]; then
     find $DocDir/prod/debs -type f -name '*.deb' -links -3 >$TmpDir/prodprep
     if [ -s $TmpDir/prodprep ]; then
 	nbDel=`wc -l <$TmpDir/prodprep`
-	echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Removing $nbDel stale production packages whose source has been deleted" >&2
+	echo "$(now)Removing $nbDel stale production packages whose source has been deleted" >&2
 	xargs rm -v <$TmpDir/prodprep | sed 's/^r/R/' >&2
-	echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Updating $DocDir/prod ..." >&2
+	echo "$(now)Updating $DocDir/prod ..." >&2
 	./update.sh $DocDir/prod
     fi
     rm $TmpDir/prodprep
@@ -153,11 +159,11 @@ nbDel=0
 find $DebDir -type f -name '*.deb' -links -2 >$TmpDir/preponly
 if [ -s $TmpDir/preponly ]; then
     nbDel=`wc -l <$TmpDir/preponly`
-    echo "$(date +'[%Y-%m-%d %H:%M:%S] ') Removing $nbDel stale pre-prod packages whose source has been deleted" >&2
+    echo "$(now)Removing $nbDel stale pre-prod packages whose source has been deleted" >&2
     xargs rm -v <$TmpDir/preponly | sed 's/^r/R/' >&2
 fi
 rm $TmpDir/preponly
 
-echo "$(date +'[%Y-%m-%d %H:%M:%S] ') update.sh $RepDir" >&2
+echo "$(now)update.sh $RepDir" >&2
 test $nbAdd -gt 0 -o $nbDel -gt 0 && exec ./update.sh $RepDir
-echo "$(date +'[%Y-%m-%d %H:%M:%S] ') update.sh $RepDir ended" >&2
+echo "$(now)update.sh $RepDir ended" >&2
