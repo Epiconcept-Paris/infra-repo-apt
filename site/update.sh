@@ -52,27 +52,54 @@ if ! [ -f $CfgDir/dists -a -f $CfgDir/relconf -a -f $GpgDir/key.gpg ]; then
 	exit 2
     fi
 fi
+Top=$PWD/$RepDir
 
 #
 #   First step: generate the Packages files
 #
-DebDir=$RepDir/debs
+DebDir=$RepDir/debs	# Packages top-dir
+PkgDir=$RepDir/.pkg	# Package-info cache
+Ts='+%Y-%m-%d %H:%M:%S'
+Dsp="dpkg-scanpackages: info: Wrote 1 entries to output Packages file."
+Err=$PkgDir/errors
+Ovr=$PkgDir/override
+>$Err
 for DebArch in $(ls -d $DebDir/*/*)
 do
-    echo "$(now)Generating $DebArch/override" >&2
-    for deb in $DebArch/*.deb
+    ArchDir=$(expr $DebArch : "$DebDir/\(.*\)")
+    echo "$(now)Processing $ArchDir ..." >&2
+    mkdir -p $PkgDir/$ArchDir
+    #	First, build all missing / obsolete .pkg files
+    /bin/ls -l --time-style="$Ts" $DebArch | while read m l u g s date time name
     do
-	basename $deb | sed 's/_.*$/ optional base/'
-    done | sort -u >$DebArch/override
-
-    echo "$(now)Processing $DebArch ..." >&2
-    ArchDir=$(expr $DebArch : "$RepDir/\(.*\)")
-    # Paths in Packages must be relative to $RepDir
-    (cd $RepDir; dpkg-scanpackages -m $ArchDir $ArchDir/override >$ArchDir/Packages)
-    rm $DebArch/override
+	pkg=$(basename "$name" .deb)
+	test "$pkg" = "$name" && continue	# $name does not end in .deb (e.g. Packages)
+	pkg="$pkg.pkg"
+	if [ -f $PkgDir/$ArchDir/$pkg ]; then
+	    set -- $(ls -l --time-style="$Ts" $PkgDir/$ArchDir/$pkg)
+	    test "$6" = "$date" -a "$7" = "$time" && continue
+	fi
+	echo "Processing $ArchDir/$name"
+	echo "$pkg" | sed 's/_.*$/ optional base/' >$Ovr
+	dpkg-scanpackages -m "$DebArch/$name" $Ovr 2>>$Err | sed "s;$Top/;;" >$PkgDir/$ArchDir/$pkg
+	touch -d "$date $time" $PkgDir/$ArchDir/$pkg
+    done
+    #	Then remove any stale .pkg file
+    ls $PkgDir/$ArchDir | while read f
+    do
+	deb=$(basename "$f" .pkg)
+	test "$deb" = "$f" && continue	# $f does not end in .pkg
+	deb=$deb.deb
+	test -f $DebArch/$deb || { echo "Removing obsolete $PkgDir/$ArchDir/$f"; rm -f $PkgDir/$ArchDir/$f; }
+    done
+    All=$DebArch/Packages
+    >$All
+    find $PkgDir/$ArchDir -name '*.pkg' | LANG=C sort -t_ -k1,1 | xargs cat >>$All
     
-    echo "$(now)Processing $DebArch ended" >&2
+    echo "$(now)Processing $ArchDir ended" >&2
 done
+grep "^$Dsp\$" $Err >/dev/null && echo "g/^$Dsp\$/d\nw" | ed - $Err
+rm -f $Ovr
 
 #
 #   Second step: make the Dist directories
