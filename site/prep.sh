@@ -115,7 +115,7 @@ if [ $NewDeb -gt 0 ]; then
 		continue
 	    fi
 	fi
-	DebVer=`expr "$Vers" : '.*+\(deb[1-9][0-9]*\)$'` || DebVer='any'
+	DebVer=`expr "$Vers" : '.*[+~]\(deb[1-9][0-9]*\)$'` || DebVer='any'
 	ArchDir=$DebDir/$DebVer/$Arch
 	Pkg=${Name}_${Vers}_$Arch.deb
 	if [ -f $ArchDir/$Pkg ]; then
@@ -135,7 +135,7 @@ if [ $NewDeb -gt 0 ]; then
 	test $File = $Pkg || echo "$(now)Linked `expr $deb : "$SrcDir/\(.*\)"` as $DebVer/$Arch/$Pkg" >&2
 	mkdir -p $ArchDir
 	test $nbAdd -eq 0 && echo "$(now)Adding files to $RepDir ..." >&2
-	ln $deb $ArchDir/$Pkg
+	ln "$deb" "$ArchDir/$Pkg"
 	nbAdd=`expr $nbAdd + 1`
     done <$TmpDir/deblist
     rm $TmpDir/deblist
