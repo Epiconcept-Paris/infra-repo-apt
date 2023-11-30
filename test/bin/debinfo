@@ -2,48 +2,155 @@
 #
 #	debinfo - Show metadata information on Debian package files
 #
-Prg=`basename $0`
+#	Version 1.1 (with 20/27 fields on -a instead of previous 18/25)
+#
+Prg="$(basename "$0")"
 
 # We use bash arrays
+#   Our short headers for file-only info
 Hdrx=(Path File Size Links Inod MD5 SHA1 SHA256)
+#   Our full headers for file-only info, mimicking dpkg-query fields (for FmtHelp only)
 Hlpx=(Filepath Filename FileSize Hardlinks Inode MD5sum SHA1sum SHA256sum)
 nHx=${#Hdrx[*]}
-Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Summ Desc Maint Home Source Stat LastMod Instsz Confl Break Prov Predeps Deps)
-Fmts=([$nHx]=Package Version Architecture Section Priority Origin binary:Summary Description Maintainer Homepage Source db:Status-Abbrev db-fsys:Last-Modified Installed-Size Conflicts Breaks Provides Pre-Depends Depends)
-# non-(internal) omitted: Bugs Enhances Essential Recommends Replaces Suggests
-Abrs=(F f z h i m 1 2 n v a s p o k c M H S t T Z C B P D d)
+
+#   Our short headers for all installed packages
+Hdrs=([$nHx]=Name Vers Arch Sect Prio Orig Summ Desc Maint Home Source Stat LastMod Instsz Confl Break Prov Predeps Deps Recom Essen)
+#   Corresponding dpkg-deb & dpkg-query fields (man dpkg-query)
+Fmts=([$nHx]=Package Version Architecture Section Priority Origin binary:Summary Description Maintainer Homepage Source db:Status-Abbrev db-fsys:Last-Modified Installed-Size Conflicts Breaks Provides Pre-Depends Depends Recommends Essential)
+# (non-internal) omitted: Bugs Enhances Replaces Suggests
+
+#   Format characters for all file-only + installed fields
+Abrs=(F f z h i m 1 2 n v a s p o k c M H S t T Z C B P D d r e)
+
+#   Format translation from our file-abrs to stat -c %x
 declare -A StFs
 StFs=([z]=s [h]=h [i]=i)
 
-#   Usasge [<exit-code>]
+#   Field Abr RE (extract abrs from Format)
+faRE='s/[^%]*%(.)[^%]*/\1 /pg'
+
+#   Show usage and exit
+#	Usage [<exit-code>]
 Usage()
 {
-    echo "Display debian package(s) control fields" >&2
-    echo -e "Usage:\t$Prg [-f format-string | -a [-d]] [-r] [-s separator] [package-file ...]" >&2
+    echo "debinfo - Display debian package(s) control fields - Version 1.1" >&2
+    echo -e "Usage:\t$Prg [-c] [-f format-string | -a [-d]] [-r] [-s separator] [package-file ...]" >&2
+    echo -e "\t-c compatible with version 1.0 (with 18/25 fields on -a)" >&2
     echo -e "\t-a sets format-string to display all existing fields (except Path)" >&2
-    echo -e "\t-d full Description with -a, not just Summary" >&2
+    echo -e "\t-d full Description with -a, instead of Summary" >&2
     echo -e "\t-r suppresses the header" >&2
     echo -e "\t$Prg -H will list %<x> format specifiers" >&2
     echo "If no package-file is specified, installed packages will be displayed"
+#   shellcheck disable=SC2086	# Double quote to prevent globbing
     exit $1
 }
 
-#   FmtHelp
-FmtHelp()
+#   Return number of repeats in a string
+nbRep()
 {
-    echo "Format specifiers:"
-    echo "  Package files only:"
-    for idx in "${!Hdrx[@]}"
-    do
-	echo "    %${Abrs[$idx]}  ${Hlpx[$idx]}"
+    local str="$1"
+    local -i len=${#str}
+    local -i hc=$(((len / 2) + (len % 2))) i=1 nb
+    local rpt tst flt
+
+    while [ "$i" -le "$hc" ]; do
+	if [ $((len % i)) -eq 0 ]; then
+	    nb=$((len / i))	# Potential number of repeats
+	    #	We rotate str $i chars
+	    eval "$(echo "$str" | sed -nr "s/^(.{$i})(.*)$/rpt=\"\1\" tst=\"\2\1\"/p")"
+	    #	If str is unchanged, we found our repeat string !
+	    test "$str" = "$tst" && break
+	else
+	    nb=1
+	    rpt="$str"
+	fi
+	i=$((++i))
     done
-    echo "  Files and installed packages:"
+    #	IF "$3", convert TABs to escape code OR leave as is
+    test "$3" && flt="sed 's/\t/\\\\t/g'" || flt='cat'
+    #	IF "$2", echo number & repeat-string OR just number
+    test "$2" && echo "nb=$nb rpt=\"$rpt\"" | eval "$flt" || echo $nb
+}
+
+#   Assemble -a Format
+#	allFmt <with-files>
+allFmt()
+{
+    #global Hdrx Abrs Hdrs Sep fDesc Compat
+    local s idx fmt
+
+    s=
+    if [ "$1" ]; then
+	for idx in "${!Hdrx[@]}"
+	do
+	    test "${Abrs[$idx]}" = 'F' && continue	# Path
+	    fmt="$fmt$s%${Abrs[$idx]}"
+	    s="$Sep"
+	done
+    fi
     for idx in "${!Hdrs[@]}"
     do
-	v=`expr "${Fmts[$idx]}" : '.*:\(.*\)'`
-	test "$v" || v="${Fmts[$idx]}"
-	echo "    %${Abrs[$idx]}  $v"
+	test "${Abrs[$idx]}" = 'c' -a -z "$fDesc" && continue	# Description
+	test "${Abrs[$idx]}" = 'k' -a "$fDesc" && continue	# Summary
+	fmt="$fmt$s%${Abrs[$idx]}"
+	s="$Sep"
+	test "$Compat" -a "${Hdrs[$idx]}" = 'Deps' && break
     done
+    printf '%s\\n\n' "$fmt"
+}
+
+#   Show all full and short fields, with index in Format
+FmtHelp()
+{
+    #global Format faRE Hdrx Abrs Hlpx Hdrs Fmts
+    local fAbr fmt xHdr xFmt fix afi v
+    local -i nAbr nRep idx afo aio
+
+    fAbr=($(echo "$Format" | sed -nr "$faRE"))
+    nAbr=${#fAbr[*]}
+    nRep=$(nbRep "$(echo -e "$Format" | sed 's/%.//g')")
+    #echo "nAbr=${#fAbr[*]} fAbr=\"${fAbr[*]}\" nRep=$nRep" >&2
+
+    #	If at leat 2 Abr and one more than nRep, format is of a xSV file
+    test "$nAbr" -gt 1 -a "$nAbr" -eq $((++nRep)) && fmt=y
+
+    echo "Format specifiers, tags and indexes:"
+    echo "  Package files only:"
+    #	If format for xSV, add extra column
+    if [ "$fmt" ]; then
+	xHdr=' Fmt'
+	xFmt='   %2s'
+    fi
+    echo "    Abr Full            Short   File Inst$xHdr"
+    for idx in "${!Hdrx[@]}"
+    do
+	fix=	# Format IndeX
+	if [ "$fmt" ]; then
+	    fix=$(Index fAbr "${Abrs[$idx]}")
+	    test "$fix" -ge 0 && fix=$((++fix)) || fix=-
+	fi
+	test "$idx" -eq 0 && afi=- || afi=$idx	# all-files-index
+	printf "    %%%s  %-14s  %-7s  %2s    -$xFmt\n" "${Abrs[$idx]}" "${Hlpx[$idx]}" "${Hdrx[$idx]}" "$afi" $fix
+    done
+    echo "  Files and installed packages:"
+    afo=0	# all file offset
+    aio=-$idx	# all inst offset
+    for idx in "${!Hdrs[@]}"
+    do
+	v="$(expr "${Fmts[$idx]}" : '.*:\(.*\)')"
+	test "$v" || v="${Fmts[$idx]}"
+
+	test "${Hdrs[$idx]}" = 'Desc' && { afo=$((--afo)); aio=$((--aio)); }
+
+	fix=	# Format IndeX
+	if [ "$fmt" ]; then
+	    fix=$(Index fAbr "${Abrs[$idx]}")
+	    test "$fix" -ge 0 && fix=$((++fix)) || fix=-
+	fi
+	printf "    %%%s  %-14s  %-7s  %2s   %2s$xFmt\n" "${Abrs[$idx]}" "$v" "${Hdrs[$idx]}" $((idx+afo)) $((idx+aio)) $fix
+    done
+    echo "Current format is:"
+    echo "   \"$Format\"" | sed -e 's/\t/\\t/g' -e 's/\n/\\n/g'
 }
 
 #   Index <array> <value>
@@ -54,12 +161,14 @@ Index()
 
     for idx in "${!a[@]}"
     do
-	test "${a[$idx]}" = "$2" && { echo $idx; return; }
+	test "${a[$idx]}" = "$2" && { echo "$idx"; return; }
     done
     echo -1
 }
 
 #   sums file fs...
+#
+#   shellcheck disable=SC2046	# Quote this to prevent word splitting
 sums()
 {
     local file fmt fs
@@ -70,104 +179,94 @@ sums()
     for fs in "$@"
     do
 	case $fs in
-	    m)	set `md5sum "$file"`;;
-	    1)	set `sha1sum "$file"`;;
-	    2)	set `sha256sum "$file"`;;
+	    m)	set $(md5sum "$file");;
+	    1)	set $(sha1sum "$file");;
+	    2)	set $(sha256sum "$file");;
 	esac
-	fmt="$fmt -e s/%$fs/$1/g"
+	fmt="$fmt -e 's/%$fs/$1/g'"
     done
     echo "$fmt"
 }
 
+#
 # Main
+#
 #   Parse args
-Sep='	'
-while getopts 'af:hrds:H' opt
+Sep='	'	# Tab
+while getopts 'acf:s:rdHh' opt
 do
     case $opt in
+	a)  fmtAll=y;;
+	c)  Compat=y;;
 	f)  Format="$OPTARG"	;;
 	s)  Sep="$OPTARG"	;;
-	a)  fmtAll=y;;
 	r)  noHdr=y;;
 	d)  fDesc=y;;
-	H)  FmtHelp; exit 0;;
+	H)  doHelp=y;;
 	h)  Usage 0;;	# help
 	\?) Usage 1;;	# error
     esac
 done
-test "$Format" || Format="%n$Sep%v$Sep%a$Sep%k\n"
+if [ "$Format" ]; then
+    test "$fmtAll" && { echo "$Prg: cannot specify -a with -f <string>" >&2; Usage 1; }
+else
+    Format="%n$Sep%v$Sep%a$Sep%k\n"
+fi
 if [ "$fDesc" -a -z "$fmtAll" ]; then
     echo "$Prg: discarding -d option not used with -a" >&2
     fDesc=
 fi
-shift `expr $OPTIND - 1`
+shift $((OPTIND - 1))
 test $# -gt 0 && onFiles=y
 
-#   Assemble -a Format
-if [ "$fmtAll" ]; then
-    Format=
-    s=
-    if [ "$onFiles" ]; then
-	for idx in "${!Hdrx[@]}"
-	do
-	    test ${Abrs[$idx]} = 'F' && continue	# Path
-	    Format="$Format$s%${Abrs[$idx]}"
-	    s="$Sep"
-	done
-    fi
-    for idx in "${!Hdrs[@]}"
-    do
-	test ${Abrs[$idx]} = 'c' -a -z "$fDesc" && continue	# Description
-	test ${Abrs[$idx]} = 'k' -a "$fDesc" && continue	# Summary
-	Format="$Format$s%${Abrs[$idx]}"
-	s="$Sep"
-    done
-    Format="$Format\\n"
-fi
+test "$fmtAll" && Format="$(allFmt $onFiles)"
 
 # Check format specifiers
-sedHdrs=" -e s/\\\\n/\
-/g"
-sedFmts=" -e s/\\\\n//g"
-for fs in `echo "$Format" | sed -nr 's/[^%]*%(.)[^%]*/\1 /pg'`
+sedHdrs=" -e 's/\\\\n/\n/g' -e 's/\\\\t/\t/g'"
+sedFmts=" -e 's/\\\\n/\f/g'"
+for fs in $(echo "$Format" | sed -nr "$faRE")
 do
-    idx=`Index Abrs $fs`
-    if [ $idx -ge 0 ]; then
-	if [ $idx -lt $nHx ]; then
+    idx=$(Index Abrs "$fs")
+    if [ "$idx" -ge 0 ]; then
+	if [ "$idx" -lt "$nHx" ]; then
 	    if [ "$onFiles" ]; then
-		sedHdrs=" $sedHdrs -e s/%$fs/${Hdrx[$idx]}/g"
-		test $idx -eq 0 && doPath=y
-		test $idx -eq 1 && doFile=y
-		test $idx -ge 2 -a $idx -le 4 && statFmt="$statFmt -e s/%%$fs/%${StFs[$fs]}/g"
-		test $idx -ge 5 -a $idx -lt $nHx && sumsOpt="$sumsOpt$fs "
+		sedHdrs=" $sedHdrs -e 's/%$fs/${Hdrx[$idx]}/g'"
+		test "$idx" -eq 0 && doPath=y
+		test "$idx" -eq 1 && doFile=y
+		test "$idx" -ge 2 -a "$idx" -le 4 && statFmt="$statFmt -e 's/%%$fs/%${StFs[$fs]}/g'"
+		test "$idx" -ge 5 -a "$idx" -lt "$nHx" && sumsOpt="$sumsOpt$fs "
 	    else
 		echo "$Prg: ignoring %$fs file specifier" >&2
 	    fi
 	else
-	    sedHdrs=" $sedHdrs -e s/%$fs/${Hdrs[$idx]}/g"
-	    sedFmts=" $sedFmts -e s/%$fs/\${${Fmts[$idx]}}/g"
+	    sedHdrs=" $sedHdrs -e 's/%$fs/${Hdrs[$idx]}/g'"
+	    sedFmts=" $sedFmts -e 's/%$fs/\${${Fmts[$idx]}}/g'"
 	fi
     else
 	echo "$Prg: ignoring unknown %$fs specifier" >&2
     fi
 done
 
+#   Show Format Help and exit
+test "$doHelp" && { FmtHelp; exit 0; }
+
 #   All set: display them !
-test "$noHdr" || echo "$Format" | sed$sedHdrs
+test "$noHdr" || echo -n "$Format" | eval "sed$sedHdrs"
 if [ "$onFiles" ]; then	# Some .deb args, display info on them
     for path in "$@"
     do
-	test -f "$path" || { echo "File $path not found" >&2; continue; }
-	file=`basename $path`
+	test -f "$path" || { echo "File '$path' not found" >&2; continue; }
+	file=$(basename "$path")
 	sedFmtx=
-	test "$doPath" && sedFmtx="$sedFmtx -e s;%${Abrs[0]};$path;g"
-	test "$doFile" && sedFmtx="$sedFmtx -e s;%${Abrs[1]};$file;g"
-	test "$statFmt" && sedFmtx="$sedFmtx`stat -c "$statFmt" "$path"`"
-	test "$sumsOpt" && sedFmtx="$sedFmtx`sums "$path" $sumsOpt`"
-	Fmt=`echo "$Format" | sed$sedFmtx$sedFmts`
+	test "$doPath" && sedFmtx="$sedFmtx -e 's;%${Abrs[0]};$path;g'"
+	test "$doFile" && sedFmtx="$sedFmtx -e 's;%${Abrs[1]};$file;g'"
+	test "$statFmt" && sedFmtx="$sedFmtx$(stat -c "$statFmt" "$path")"
+#	shellcheck disable=SC2086   # Double quote to prevent globbing sumsOpt
+	test "$sumsOpt" && sedFmtx="$sedFmtx$(sums "$path" $sumsOpt)"
+	Fmt=$(echo "$Format" | eval "sed$sedFmtx$sedFmts")
 	dpkg-deb -W --showformat "$Fmt" "$path" | tr '\n\f' '\v\n'
     done
 else			# else display info on installed packages
-    Fmt=`echo "$Format" | sed$sedFmts`
+    Fmt=$(echo "$Format" | eval "sed$sedFmts")
     dpkg-query -W -f "$Fmt" | tr '\n\f' '\v\n'
 fi
