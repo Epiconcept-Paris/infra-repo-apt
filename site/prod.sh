@@ -15,7 +15,7 @@ Log=/var/log/epiconcept/aptv2.prod.log
 
 Usage()
 {
-    echo "Usage: $Prg [-t <prod-tag> ] [ add <package> | del <package> | ver [ <package> ] ]" >&2
+    echo "Usage: $Prg [-t <prod-tag> ] add <package> | del <package> | ver [ <package> ] | ls [ <filter> ]" >&2
     exit ${1:-1}
 }
 
