@@ -1,4 +1,4 @@
-site/config/prodlist
+site/config/prod*.list
 site/sources
 site/docroot
 site/gpg/master.gpg
