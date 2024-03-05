@@ -109,8 +109,10 @@ rm -f $Ovr
 Mail="`sed -n 's/^Name-Email: //p' $GpgDir/key.conf`"
 Sign=`gpg -k --with-colons $Mail | awk -F: '$1 == "sub" {print substr($5,9)}'`
 
-while read Dist BinDir
+while read Dist BinDir Comment
 do
+    test "$Dist" || continue		# empty line
+    test "$Dist" = '#' && continue	# comment line
     echo "$(now)Updating '$Dist' distribution..." >&2
     DistDir=$RepDir/dists/$Dist
     CompDir=$DistDir/$Compo
@@ -144,7 +146,7 @@ do
     done
 
     # Create the Release file
-    test "$Type" = 'prod' && Orig='production' || Orig='pre-prod'
+    expr "$Type" : 'prod' >/dev/null && Orig='production' || Orig='pre-prod'
     sed -e "s/%ORIG%/$Orig/" -e "s/%DIST%/$Dist/" -e "s/%COMPO%/$Compo/" -e "s/%ARCHS%/$Archs/" $CfgDir/relconf >$TmpDir/relconf
     apt-ftparchive -c $TmpDir/relconf release $DistDir >$DistDir/Release
 
@@ -157,7 +159,7 @@ done <$CfgDir/dists
 #
 # Cleanup
 rm $TmpDir/relconf
-# If called for prod, save prodlist
-test "$Type" = 'prod' && find -L $DebDir -type f -name '*.deb' | sed 's;.*/;;' >config/prodlist
+# If called for prod, save prod.list
+expr "$Type" : 'prod' >/dev/null && find -L $DebDir -type f -name '*.deb' | sed 's;.*/;;' >config/${Type}.list
 # Add public key that APT clients will import with apt-key
 test -f $RepDir/key.gpg || ln $GpgDir/key.gpg $RepDir

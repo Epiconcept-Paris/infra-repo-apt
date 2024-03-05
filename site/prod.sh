@@ -7,20 +7,17 @@
 Prg=`basename $0`
 
 # See tree.txt for wanted and required directory tree
-DocDir=docroot
-PreDir=$DocDir/prep/debs
-RepDir=$DocDir/prod
-DebDir=$RepDir/debs
-TmpDir=tmp
+DocDir='docroot'
+PreDir="$DocDir/prep/debs"
+ProDir='prod'
+TmpDir='tmp'
 Log=/var/log/epiconcept/aptv2.prod.log
 
 Usage()
 {
-    echo "Usage: $Prg [ add <package> | del <package> | ver [ <package> ] ]" >&2
-    exit 1
+    echo "Usage: $Prg [-t <prod-tag> ] [ add <package> | del <package> | ver [ <package> ] ]" >&2
+    exit ${1:-1}
 }
-
-test "$1" = 'add' -o "$1" = 'del' -o "$1" = 'ver' || Usage
 
 #   We want our paths relative, so move to our top directory
 if ! [ -d $PreDir -a -x update.sh ]; then
@@ -32,6 +29,41 @@ if ! [ -d $PreDir -a -x update.sh ]; then
 fi
 mkdir -p $TmpDir
 
+test "$APT_PROD_TAG" && Protag="$APT_PROD_TAG"
+#   Parse options
+while getopts 'ht:' opt
+do
+    case $opt in
+	t)  ProTag="$OPTARG"	;;
+	h)  Usage 0;;	# help
+	\?) Usage 1;;	# error
+    esac
+done
+shift `expr $OPTIND - 1`
+if [ "$ProTag" ]; then
+    ProDir="$ProDir-$ProTag"
+    Log=$(echo "$Log" | sed "s/\.prod\./.$ProDir./")
+    #echo "ProDir=\"$ProDir\" Log=\"$Log\""; exit 0
+fi
+RepDir="$DocDir/$ProDir"
+DebDir="$RepDir/debs"
+
+test "$1" = 'add' -o "$1" = 'del' -o "$1" = 'ver' -o "$1" = 'ls' || Usage
+
+#
+#   ls (with optional egrep filter $2)
+#
+if [ "$1" = 'ls' ]; then
+    List="config/$ProDir.list"
+    test -s "$List" || exit 0
+    if [ "$2" ]; then
+	egrep "$2" "$List"
+    else
+	cat "$List"
+    fi
+    exit 0
+fi
+
 #
 #   add & del
 #
@@ -39,7 +71,7 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
     exec 2>>$Log
     test "$1" = 'add' && { Dir=$PreDir; Act='added'; } || { Dir=$DebDir; Act='deleted'; }
     shift
-    date "+---- %Y-%m-%d %H:%M:%S - prod --------------------------------------------" >&2
+    date "+---- %Y-%m-%d %H:%M:%S - $ProDir --------------------------------------------" >&2
     find $Dir -type f -name '*.deb' | sed "s;$Dir/;;" | sort >$TmpDir/deblist
     nbAdd=0
     nbDel=0
@@ -59,10 +91,10 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
 		test -f $DebDir/$pkg && isF=y || isF=
 		if [ "$Act" = 'added' ]; then
 		    if [ "$isF" ]; then
-			echo "Package $pkg is already in prod/debs - discarded" >&2
+			echo "Package $pkg is already in $ProDir/debs - discarded" >&2
 		    else
 			mkdir -p `dirname $DebDir/$pkg`
-			ln $PreDir/$pkg $DebDir/$pkg
+			ln $PreDir/$pkg $DebDir/$pkg	# hard link
 			echo "Added $DebDir/$pkg"
 			nbAdd=`expr $nbAdd + 1`
 		    fi
@@ -71,7 +103,7 @@ if [ "$1" = 'add' -o "$1" = 'del' ]; then
 			rm -v $DebDir/$pkg | sed 's/^r/R/'
 			nbDel=`expr $nbDel + 1`
 		    else
-			echo "Package $pkg is not in prod/debs - discarded" >&2
+			echo "Package $pkg is not in $ProDir/debs - discarded" >&2
 		    fi
 		fi
 	    fi
