@@ -2,12 +2,19 @@
 #
 #	apt - APT interface
 #
+Prg=$(basename "$0")
 Usr=epiconcept_build
 Srv=51.255.164.1
+test "$Prg" = 'apt' && Apt="/space/www/apps/apt" || Apt="/space/www/apps/$Prg/site"
 
-Cmd()
+Ssh()
 {
     #global Usr Srv
     ssh $Usr@$Srv "$@"
 }
-Cmd "$@"
+
+test "$1" = 'prep' -o "$1" = 'prod' || { echo "Usage: $Prg prep | prod <arguments>" >&2; exit 1; }
+Cmd="$1"
+shift
+
+Ssh "$Apt/$Cmd.sh" "$@"
