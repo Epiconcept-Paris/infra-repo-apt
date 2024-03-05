@@ -64,6 +64,36 @@
 │   │   │   │   │       └── Packages
 │   │   │   │   ├── Release
 │   │   │   │   └── Release.gpg
+│   │   │   ├── buster
+│   │   │   │   ├── main
+│   │   │   │   │   ├── binary-all
+│   │   │   │   │   │   ├── Packages.gz
+│   │   │   │   │   │   └── Packages
+│   │   │   │   │   └── binary-amd64
+│   │   │   │   │       ├── Packages.gz
+│   │   │   │   │       └── Packages
+│   │   │   │   ├── Release
+│   │   │   │   └── Release.gpg
+│   │   │   ├── bullseye
+│   │   │   │   ├── main
+│   │   │   │   │   ├── binary-all
+│   │   │   │   │   │   ├── Packages.gz
+│   │   │   │   │   │   └── Packages
+│   │   │   │   │   └── binary-amd64
+│   │   │   │   │       ├── Packages.gz
+│   │   │   │   │       └── Packages
+│   │   │   │   ├── Release
+│   │   │   │   └── Release.gpg
+│   │   │   ├── bookworm
+│   │   │   │   ├── main
+│   │   │   │   │   ├── binary-all
+│   │   │   │   │   │   ├── Packages.gz
+│   │   │   │   │   │   └── Packages
+│   │   │   │   │   └── binary-amd64
+│   │   │   │   │       ├── Packages.gz
+│   │   │   │   │       └── Packages
+│   │   │   │   ├── Release
+│   │   │   │   └── Release.gpg
 │   │   │   ├── precise = wheezy
 │   │   │   ├── quantal = wheezy
 │   │   │   ├── raring  = wheezy
@@ -75,10 +105,23 @@
 │   │   │   ├── xenial  = stretch
 │   │   │   ├── yakkety = stretch
 │   │   │   ├── zesty   = stretch
-│   │   │   └── artful  = stretch
+│   │   │   ├── artful  = stretch
+│   │   │   ├── bionic  = buster
+│   │   │   ├── cosmic  = buster
+│   │   │   ├── disco   = buster
+│   │   │   ├── eoan    = buster
+│   │   │   ├── focal   = bullseye
+│   │   │   ├── groovy  = bullseye
+│   │   │   ├── hirsute = bullseye
+│   │   │   ├── impish  = bullseye
+│   │   │   ├── jammy   = bookworm
+│   │   │   ├── kinetic = bookworm
+│   │   │   ├── lunar   = bookworm
+│   │   │   ├── mantic  = bookworm (trixie)
+│   │   │   └── noble   = bookworm (trixie)
 │   │   └── key.gpg
 │   │
-│   └── prod
+│   └── prod*
 │       ├── debs
 │       │   ├── all
 │       │   │   └── *.deb
@@ -120,6 +163,36 @@
 │       │   │   │       └── Packages
 │       │   │   ├── Release
 │       │   │   └── Release.gpg
+│       │   ├── buster
+│       │   │   ├── main
+│       │   │   │   ├── binary-all
+│       │   │   │   │   ├── Packages.gz
+│       │   │   │   │   └── Packages
+│       │   │   │   └── binary-amd64
+│       │   │   │       ├── Packages.gz
+│       │   │   │       └── Packages
+│       │   │   ├── Release
+│       │   │   └── Release.gpg
+│       │   ├── bullseye
+│       │   │   ├── main
+│       │   │   │   ├── binary-all
+│       │   │   │   │   ├── Packages.gz
+│       │   │   │   │   └── Packages
+│       │   │   │   └── binary-amd64
+│       │   │   │       ├── Packages.gz
+│       │   │   │       └── Packages
+│       │   │   ├── Release
+│       │   │   └── Release.gpg
+│       │   ├── bookworm
+│       │   │   ├── main
+│       │   │   │   ├── binary-all
+│       │   │   │   │   ├── Packages.gz
+│       │   │   │   │   └── Packages
+│       │   │   │   └── binary-amd64
+│       │   │   │       ├── Packages.gz
+│       │   │   │       └── Packages
+│       │   │   ├── Release
+│       │   │   └── Release.gpg
 │       │   ├── precise = wheezy
 │       │   ├── quantal = wheezy
 │       │   ├── raring  = wheezy
@@ -131,7 +204,20 @@
 │       │   ├── xenial  = stretch
 │       │   ├── yakkety = stretch
 │       │   ├── zesty   = stretch
-│       │   └── artful  = stretch
+│       │   ├── artful  = stretch
+│       │   ├── bionic  = buster
+│       │   ├── cosmic  = buster
+│       │   ├── disco   = buster
+│       │   ├── eoan    = buster
+│       │   ├── focal   = bullseye
+│       │   ├── groovy  = bullseye
+│       │   ├── hirsute = bullseye
+│       │   ├── impish  = bullseye
+│       │   ├── jammy   = bookworm
+│       │   ├── kinetic = bookworm
+│       │   ├── lunar   = bookworm
+│       │   ├── mantic  = bookworm (trixie)
+│       │   └── noble   = bookworm (trixie)
 │       └── key.gpg
 ├── tmp
 │   └── ...

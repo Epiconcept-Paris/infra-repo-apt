@@ -1,29 +1,36 @@
-wheezy	 deb7
-precise	 deb7
-quantal	 deb7
-raring	 deb7
-saucy	 deb7
-jessie	 deb8
-trusty	 deb8
-utopic	 deb8
-vivid	 deb8
-wily	 deb8
-stretch	 deb9
-xenial	 deb9
-yakkety	 deb9
-zesty	 deb9
-artful	 deb9
-buster	 deb10
-bionic	 deb10
-cosmic	 deb10
-disco	 deb10
-eoan	 deb10
-bullseye deb11
-focal	 deb11
-groovy	 deb11
-hirsute	 deb11
-impish	 deb11
-bookworm deb12
-jammy	 deb12
-kinetic	 deb12
-lunar	 deb12
+#
+#	config/dists - Distribution names and Ubuntu-Debian correspondance
+#
+# Name	 Bin	Comment...
+#
+precise	 deb7	12.04 LTS
+quantal	 deb7	12.10
+raring	 deb7	13.04
+wheezy	 deb7	13.05 Deb
+saucy	 deb7	13.10
+trusty	 deb8	14.04 LTS
+utopic	 deb8	14.10
+vivid	 deb8	15.04
+jessie	 deb8	15.04 Deb
+wily	 deb8	15.10
+xenial	 deb9	16.04 LTS
+yakkety	 deb9	16.10
+zesty	 deb9	17.04
+stretch	 deb9	17.06 Deb
+artful	 deb9	17.10
+bionic	 deb10	18.04 LTS
+cosmic	 deb10	18.10
+disco	 deb10	19.04
+buster	 deb10	19.07 Deb
+eoan	 deb10	19.10
+focal	 deb11	20.04 LTS
+groovy	 deb11	20.10
+hirsute	 deb11	21.04
+bullseye deb11	21.08 Deb
+impish	 deb11	21.10
+jammy	 deb12	22.04 LTS
+kinetic	 deb12	22.10
+lunar	 deb12	23.04
+bookworm deb12	23.06 Deb
+mantic   deb12	23.10
+noble	 deb12	24.04 LTS
