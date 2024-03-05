@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+#	apt - APT interface
+#
+Usr=epiconcept_build
+Srv=51.255.164.1
+
+Cmd()
+{
+    #global Usr Srv
+    ssh $Usr@$Srv "$@"
+}
+Cmd "$@"
