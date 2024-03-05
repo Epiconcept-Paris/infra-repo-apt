@@ -14,7 +14,8 @@ config/obsolete
 config/component
 config/dists
 config/relconf
-config/prodlist	(généré par prod.sh)
+config/prod.list	(optionnel, généré par prod.sh)
+config/prod-<tag>.list	(optionnels, générés par prod.sh)
 gpg/genkey.sh
 gpg/key.conf
 gpg/master.gpg	(généré par gpg/genkey.sh)
@@ -31,7 +32,7 @@ et elle exploite l'arborescence suivante:
 │   ├── obsolete
 │   ├── dists
 │   ├── relconf
-│   └── prodlist    (généré par prod.sh)
+│   └── prod.list   (généré par prod.sh)
 │
 ├── gpg
 │   ├── genkey.sh
@@ -61,7 +62,14 @@ et elle exploite l'arborescence suivante:
 │   │   │   └── ... (distributions Debian/Ubuntu)
 │   │   └── key.gpg
 │   │
-│   └── prod	    (LE dépôt de production)
+│   ├── prod	    (LE dépôt de production optionnel)
+│   │   ├── debs
+│   │   │   └── ... (paquets)
+│   │   ├── dists
+│   │   │   └── ... (distributions Debian/Ubuntu)
+│   │   └── key.gpg
+│   │
+│   └── prod-<tag>  (Un autre dépôt de production optionnel)
 │       ├── debs
 │       │   └── ... (paquets)
 │       ├── dists
@@ -191,14 +199,13 @@ Les paquets dont le nom dans `sources/` n'est pas normalisé sont signalés, ave
 Puis `prep.sh` invoque le script auxiliaire `update.sh` qui peuple le répertoire `docroot/prep/dists` selon le contenu du fichier `config/dists` dont voici un extrait :
 ```
 ...
-saucy	deb7
-jessie	deb8
-trusty	deb8
-utopic	deb8
-vivid	deb8
-wily	deb8
-stretch	deb9
-xenial	deb9
+saucy	 deb7	13.10
+trusty	 deb8	14.04 LTS
+utopic	 deb8	14.10
+vivid	 deb8	15.04
+jessie	 deb8	15.04 Deb
+wily	 deb8	15.10
+xenial	 deb9	16.04 LTS
 ...
 ```
 Pour le premier champ de chaque ligne du fichier `config/dists`, `update.sh` crée un répertoire de distribution portant ce nom et ayant la structure :
@@ -216,6 +223,8 @@ Pour le premier champ de chaque ligne du fichier `config/dists`, `update.sh` cr�
 ```
 Le deuxième champ de chaque ligne du fichier `config/dist` indique l'étiquette (chaine de caractères) à rechercher dans la version de chaque paquet pour que, si elle s'y trouve, ce paquet ne soit inclus que dans la distribution indiquée dans le premier champ.
 Par exemple, les binaires PHP comprenant l'étiquette `deb8` ne sont inclus que dans les distributions de `config/dists` dont le deuxième champ est `deb8`.
+
+Le reste de chaque ligne du fichier `config/dist` est un commentaire.
 
 Les architectures `all` et `amd64` qui apparaissent en suffixes des répertoires `binary-all` et `binary-amd64` sont, elles, extraites automatiquement des packages eux-mêmes.
 Si l'on introduisait par exemple dans `sources` des paquets pour l'architecture `armh`, celle ci apparaitrait automatiquement dans un répertoire `binary-armh` de l'arborescence de chaque distribution de `dist`, à condition toutefois que la sélection ci-dessus par le deuxième champ de `config/dists` le permette.
@@ -243,15 +252,11 @@ Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'a
 ./prep.sh ver
 ```
 
-Pour obtenir par ailleurs la liste de tous les paquets du dépôt `prep`, on peut employer par exemple :
+#### 3b) Liste des *noms-dpkg* de paquets de pré-production (en production ou non) :
 ```
-find docroot/prep/debs -type f -name '*.deb'
+./prep.sh ls [ <filtre> ]
 ```
-ou encore
-```
-(cd docroot/prep/debs; find * -type f -name *.deb | sed 's;.*/;;')
-```
-ou un mélange de ces deux commandes.
+L'argument optionnel <filtre> est une expression régulière `egrep` permettant de ne sélectionner que les paquets de préproduction qui lui correspondent.
 
 
 ### 3.2 Gestion du dépôt de production `prod`
@@ -284,6 +289,21 @@ Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'a
 ```
 (de manière identique à `prep.sh ver ...`).
 
+#### 4) Gestion de dépôts `prod` multiples
+La commande `prod.sh` accepte un argument `-t <tag>` optionnel.
+Si cet argument est utilisé, toutes les commandes de `prod.sh` s'appliquent à un dépôt `prod-<tag>' et non plus simplement `prod`.
+
+Exemples avec `<tag>` = `mdmdpi`
+```
+./prod.sh -t mdmdpi add <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
+./prod.sh -t mdmdpi ver <nom-dpkg-paquet>
+```
+Si la variable d'environnement `APT_PROD_TAG` est déclarée, elle remplit la même fonction que `<tag>`.
+
+Exemple:
+```
+export APT_PROD_TAG=mdmdpi
+```
 
 ## 4 Sauvegarde, restauration et "fsck"
 
@@ -303,20 +323,20 @@ rm gpg/signing.gpg
 et avoir restauré les éléments (sauvegardés comme indiqué ci-dessus) sur le serveur désiré, il suffit d'exécuter :
 ```
 ./prep.sh update
-./prod.sh add `cat config/prodlist`
+./prod.sh add `cat config/prod.list`
 ```
 pour restaurer complètement les dépôts APT.
 
 ### 4.3 Refection des dépôts APT (comme fsck pour les systèmes de fichier)
 
-La fabrique de dépôts utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de `sources/`, de `docroot/prep/debs/` et de `docroot/prod/debs/`.
+La fabrique de dépôts utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de `sources/`, de `docroot/prep/debs/` et de `docroot/prod*/debs/`.
 Pour diverses raisons, il peut arriver que ces liens soient anormalement cassés.
 Les scripts de la fabrique ne fonctionneraient alors plus correctement.
 Mais la méthode utilisée pour la restauration s'applique. Il suffit de faire :
 ```
 rm -r docroot
 ./prep.sh update
-./prod.sh add `cat config/prodlist`
+./prod.sh add `cat config/prod.list`
 ```
 pour rétablir le fonctionnement normal.
 
@@ -336,7 +356,8 @@ sudo ln -s `realpath site/docroot` /var/www/html/apt
 >test/share/local
 test/bake
 ```
-Enfin ce dépôt git contient aussi le script `test/bin/debinfo` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépôts APT, qui n'est utilisé que dans l'image de test pour lister les packages à la fin de `test/cfg`.
+Enfin ce dépôt git contient aussi le script `test/bin/debinfo` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépôts APT.
+Il n'est utilisé que dans l'image de test pour lister les packages à la fin de `test/cfg`.
 
 ## 6 Déploiement manuel
 
