@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-#	apt - APT interface
+#	apt - Interface to remote APT repository admin
 #
 Prg=$(basename "$0")
-Usr=epiconcept_build
-Srv=51.255.164.1
-test "$Prg" = 'apt' && Apt="/space/www/apps/apt" || Apt="/space/www/apps/$Prg/site"
+Usr='epiconcept_build'
+Srv='51.255.164.1'
+Top='/space/www/apps'
+test "$Prg" = 'apt' && Apt="$Top/apt" || Apt="$Top/$Prg/site"
 
 Ssh()
 {
