@@ -32,5 +32,5 @@ jammy	 deb12	22.04 LTS
 kinetic	 deb12	22.10
 lunar	 deb12	23.04
 bookworm deb12	23.06 Deb
-mantic   deb12	23.10
-noble	 deb12	24.04 LTS
+mantic   deb12	23.10 (deb13 when ready)
+noble	 deb12	24.04 LTS (deb13 when ready)

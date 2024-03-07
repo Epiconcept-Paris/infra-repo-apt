@@ -3,4 +3,11 @@
 #	ubudeb - Show debian_version of ubuntu version passed as arg
 #
 test "$1" || { echo "Usage: $0 <Ubuntu-version>" >&2; exit 1; }
-docker run -ti --name epi-ubu --rm ubuntu:$1 cat /etc/debian_version
+if [ "$http_proxy" -a "$https_proxy" ]; then
+    Env="--env http_proxy=$http_proxy --env https_proxy=$https_proxy"
+fi
+test "$2" = 'upd' && Apt="set -e
+echo -n 'apt update ' && apt update >/tmp/upd.out 2>/tmp/apt.err
+echo -n '\napt upgrade ' && DEBIAN_FRONTEND='noninteractive' apt upgrade -y >/tmp/upg.out 2>>/tmp/apt.err
+echo -n '\ndebian_version: ' && "
+docker run -ti $Env --name epi-ubu --rm ubuntu:$1 sh -c "$Apt cat /etc/debian_version"
