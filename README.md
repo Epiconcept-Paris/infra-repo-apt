@@ -105,7 +105,7 @@ Le répertoire `tmp` est créé si nécessaire et doit normalement être vide ap
 Enfin, le script `update.sh` produit un log `update.log` qui signale la date des updates et le détail de leur traitement (surtout les anomalies).
 
 
-## 2 Installation
+## 2 Installation sur le serveur de dépôts
 
 ### 2.1 Installation des paquets prérequis
 
@@ -152,7 +152,6 @@ Enfin, si ce serveur de dépôts est bien, comme recommandé, différent de celu
 cert-digest-algo SHA256
 digest-algo SHA256
 ```
-
 ### 2.3 Copie des fichiers
 
 Il faut copier dans un même répertoire sur le serveur de dépôts :
@@ -167,7 +166,7 @@ Il faut créer et peupler de paquets `.deb` le répertoire `sources`.
 
 ### 3.1 Gestion du dépôt de pré-production `prep`
 
-Elle se fait par le script `prep.sh`. Trois commandes sont disponibles :
+Elle se fait par le script `prep.sh`. Quatre commandes sont disponibles :
 
 #### 1) Mise à jour du dépôt `prep` après la modification du répertoire `sources` :
 ```
@@ -224,7 +223,9 @@ Pour le premier champ de chaque ligne du fichier `config/dists`, `update.sh` cr�
 Le deuxième champ de chaque ligne du fichier `config/dist` indique l'étiquette (chaine de caractères) à rechercher dans la version de chaque paquet pour que, si elle s'y trouve, ce paquet ne soit inclus que dans la distribution indiquée dans le premier champ.
 Par exemple, les binaires PHP comprenant l'étiquette `deb8` ne sont inclus que dans les distributions de `config/dists` dont le deuxième champ est `deb8`.
 
-Le reste de chaque ligne du fichier `config/dist` est un commentaire.
+Le reste de chaque ligne du fichier `config/dist` est un commentaire (ignoré).
+
+Toute ligne du fichier `config/dist` commençant par un `#`, ou vide, est également un commentaire.
 
 Les architectures `all` et `amd64` qui apparaissent en suffixes des répertoires `binary-all` et `binary-amd64` sont, elles, extraites automatiquement des packages eux-mêmes.
 Si l'on introduisait par exemple dans `sources` des paquets pour l'architecture `armh`, celle ci apparaitrait automatiquement dans un répertoire `binary-armh` de l'arborescence de chaque distribution de `dist`, à condition toutefois que la sélection ci-dessus par le deuxième champ de `config/dists` le permette.
@@ -252,16 +253,16 @@ Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'a
 ./prep.sh ver
 ```
 
-#### 3b) Liste des *noms-dpkg* de paquets de pré-production (en production ou non) :
+#### 4) Liste des *noms-dpkg* de paquets de pré-production (en production ou non) :
 ```
 ./prep.sh ls [ <filtre> ]
 ```
-L'argument optionnel <filtre> est une expression régulière `egrep` permettant de ne sélectionner que les paquets de préproduction qui lui correspondent.
+L'argument optionnel <filtre> est une expression régulière étendue (de type `egrep`) permettant de ne sélectionner que les paquets de pré-production qui lui correspondent.
 
 
 ### 3.2 Gestion du dépôt de production `prod`
 
-Elle se fait par le script `prod.sh`. Trois commandes sont également disponibles :
+Elle se fait par le script `prod.sh`. Quatre commandes sont également disponibles :
 
 #### 1) Ajout au dépôt `prod` de paquets du dépôt `prep` :
 ```
@@ -283,14 +284,22 @@ ou
 ```
 Le nom-dpkg d'un paquet est le nom du paquet au sens dpkg, c'est à dire jusqu'au premier caractère '_'.
 
-#### 3b) Liste des noms-dpkg de paquets de production comportant plus d'une version :
+#### 3b) Liste des *noms-dpkg* de paquets de production comportant plus d'une version :
 ```
 ./prod.sh ver
 ```
 (de manière identique à `prep.sh ver ...`).
 
-#### 4) Gestion de dépôts `prod` multiples
+#### 4) Liste des *noms-dpkg* de paquets de production :
+```
+./prod.sh ls [ <filtre> ]
+```
+(de manière identique à `prep.sh ls ...`).
+
+### 3.3) Gestion de dépôts `prod` multiples
+
 La commande `prod.sh` accepte un argument `-t <tag>` optionnel.
+
 Si cet argument est utilisé, toutes les commandes de `prod.sh` s'appliquent à un dépôt `prod-<tag>' et non plus simplement `prod`.
 
 Exemples avec `<tag>` = `mdmdpi`
@@ -298,12 +307,14 @@ Exemples avec `<tag>` = `mdmdpi`
 ./prod.sh -t mdmdpi add <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ./prod.sh -t mdmdpi ver <nom-dpkg-paquet>
 ```
-Si la variable d'environnement `APT_PROD_TAG` est déclarée, elle remplit la même fonction que `<tag>`.
+Si la variable d'environnement `APT_PROD_TAG` est déclarée, sa valeur remplit la même fonction que `<tag>`.
 
 Exemple:
 ```
 export APT_PROD_TAG=mdmdpi
 ```
+Si la variable `APT_PROD_TAG` est déclarée et que le l'argument `-t <tag>` est utilisé, c'est ce dernier qui prévaut.
+
 
 ## 4 Sauvegarde, restauration et "fsck"
 
@@ -336,19 +347,25 @@ Mais la méthode utilisée pour la restauration s'applique. Il suffit de faire :
 ```
 rm -r docroot
 ./prep.sh update
-./prod.sh add `cat config/prod.list`
+for list in config/prod*.list
+do
+    tag=$(expr $(basename "$list" .list) : 'prod-\{0,1\}\(.*\)$')
+    test "$tag" && arg="-t $tag" || arg=
+    ./prod.sh $arg add `cat $list`
+done
 ```
 pour rétablir le fonctionnement normal.
 
 
 ## 5 Image docker de test
 
-Ce dépôt git contient également un répertoire `test` permettant de créer une image docker sous Debian 'stretch' de tests de `apt-get`.
+Ce dépôt git contient également un répertoire `test` permettant de créer une image docker sous Debian 'bookworm' de tests de la commande `apt`.
 
 Pour créer l'image, lancer la commande `test/bake`, qui affiche à la fin la commande d'invocation du conteneur de l'image. Cette commande est également copiée dans `logs/run-${DebVer:-stretch}.sh`.
 Il est possible de créer une image docker sous une autre version de Debian par la variable d'environnement **DebVer**, par exemple : `DebVer=jessie test/bake` (attention, la validité de la version Debian n'est pas vérifiée, mais `test/bake` s'arrêtera en cas d'erreur de build de l'image docker).
 
 Le conteneur partage le répertoire `test/share`, vu en interne comme `/opt/share`, et lance automatiquement le script `test/cfg` par le biais d'un hardlink dans `test/share`.
+
 Ce script utilise par défaut les dépôts Epiconcept `https://apt.epiconcept.fr/prep (ou /prod)`, mais il est possible de tester le dépôt local de la façon suivante :
 ```
 dpkg -l apache2 >/dev/null || sudo apt-get install apache2
@@ -368,13 +385,29 @@ curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key 
 
 * Configuration du repository dans /etc/apt/sources.list.d/epiconcept.list (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
 ```
-deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ <release> main
+deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ <release-debian> main
 ```
 ce qui peut se faire ainsi
 ```
 echo "deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/epiconcept.list
 ```
-Il faut (hors de notre infra) ajouter l'authentification (en Debian 9 j'ai dû mettre dans /etc/apt/auth.conf pour que ça marche, il faut peut être inclure auth.conf.d ?)
+Il faut (hors de notre infra) ajouter l'authentification (en Debian 9, il a fallu mettre dans /etc/apt/auth.conf pour que ça marche, il faut peut être inclure auth.conf.d ?)
 ```
 echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
+```
+
+## 7 Commande `apt`
+
+Le script apt est destiné à l'accès à distance aux scripts `prep.sh` et `prod.sh`.
+
+Il s'utilise avec comme premier argument `prep` ou `prod` selon le script que l'on veut utiliser.
+Le reste des arguments est directement passé au script concerné sur le serveur de dépôts.
+
+Exemples :
+```
+apt prep	# affichera le message d'utilisation
+apt prod	# de même
+
+apt prep ls php	# affiche les paquets dont le nom comprend la chaine 'php'
+apt prod ver	# affiche les paquets de production ayant plus d'une version
 ```
