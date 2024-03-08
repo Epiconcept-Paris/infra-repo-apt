@@ -7,14 +7,14 @@
 Prg=`basename $0`
 
 # See tree.txt for wanted and required directory tree
-CfgDir=config
-GpgDir=gpg
-SrcDir=sources
-DocDir=docroot
-ProDir=prod
-PrpDir=$DocDir/prep
-DebDir=$PrpDir/debs
-TmpDir=tmp
+CfgDir='config'
+GpgDir='gpg'
+SrcDir='sources'
+DocDir='docroot'
+ProDir='prod'
+PrpDir="$DocDir/prep"
+DebDir="$PrpDir/debs"
+TmpDir='tmp'
 Log=/var/log/epiconcept/aptv2.preprod.log	# For update
 
 Usage()
@@ -196,7 +196,7 @@ fi
 #	TmpDir files: prodprep
 for Dir in $DocDir/$ProDir*
 do
-    test -d "$Dir/debs" && break	# Allow no $ProDir at all
+    test -d "$Dir/debs" || break	# Allow no $ProDir at all
     # TODO: check -3 next line
     find -L "$Dir/debs" -type f -name '*.deb' -links -3 >$TmpDir/prodprep
     if [ -s $TmpDir/prodprep ]; then

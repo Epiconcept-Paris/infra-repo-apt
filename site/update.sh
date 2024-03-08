@@ -4,19 +4,15 @@
 #
 Prg=`basename $0`
 
-CfgDir=config
-GpgDir=gpg
-TmpDir=tmp
+CfgDir='config'
+GpgDir='gpg'
+TmpDir='tmp'
 
 now()
 {
     # Timestamps: just comment-out next line to remove them
     date '+[%Y-%m-%d %H:%M:%S] '
 }
-
-# Compo is the subdir we want in each dist, exactly as it appears
-# after the dist name in /etc/apt/sources.list on APT clients
-Compo=`cat $CfgDir/component`
 
 umask 002
 #
@@ -53,6 +49,10 @@ if ! [ -f $CfgDir/dists -a -f $CfgDir/relconf -a -f $GpgDir/key.gpg ]; then
     fi
 fi
 Top=$PWD/$RepDir
+
+# Compo is the subdir we want in each dist, exactly as it appears
+# after the dist name in /etc/apt/sources.list on APT clients
+Compo=`cat $CfgDir/component`
 
 #
 #   First step: generate the Packages files
