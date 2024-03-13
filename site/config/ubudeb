@@ -2,7 +2,10 @@
 #
 #	ubudeb - Show debian_version of ubuntu version passed as arg
 #
+command -v docker >/dev/null || { echo "$0 needs 'docker' to work" >&2; exit 1; }
+
 test "$1" || { echo "Usage: $0 <Ubuntu-version>" >&2; exit 1; }
+
 if [ "$http_proxy" -a "$https_proxy" ]; then
     Env="--env http_proxy=$http_proxy --env https_proxy=$https_proxy"
 fi

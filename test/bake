@@ -9,6 +9,8 @@ Dir=`dirname $0`
 IniPwd=$PWD
 TstTop=
 
+command -v docker >/dev/null || { echo "$Prg needs 'docker' to work" >&2; exit 1; }
+
 Path() { realpath --relative-to=$IniPwd $1; }
 test "$Dir" || Dir=`dirname \`realpath $0\``
 expr "$Dir" : / >/dev/null && Dir=`Path $Dir`
