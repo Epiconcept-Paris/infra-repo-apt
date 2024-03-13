@@ -11,7 +11,7 @@ DocDir='docroot'
 PreDir="$DocDir/prep/debs"
 ProDir='prod'
 TmpDir='tmp'
-Log=/var/log/epiconcept/aptv2.prod.log
+Log=/var/log/epiconcept/aptv2.prod.log		# Aka 'update.log' in README.md
 
 Usage()
 {
@@ -29,6 +29,7 @@ if ! [ -d $PreDir -a -x update.sh ]; then
 fi
 mkdir -p $TmpDir
 
+ProTag=		# Not strictly needed, but for clarity
 test "$APT_PROD_TAG" && Protag="$APT_PROD_TAG"
 #   Parse options
 while getopts 'ht:' opt

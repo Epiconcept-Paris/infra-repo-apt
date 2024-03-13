@@ -15,7 +15,7 @@ ProDir='prod'
 PrpDir="$DocDir/prep"
 DebDir="$PrpDir/debs"
 TmpDir='tmp'
-Log=/var/log/epiconcept/aptv2.preprod.log	# For update
+Log=/var/log/epiconcept/aptv2.preprod.log	# Aka 'update.log' in README.md
 
 Usage()
 {
@@ -58,7 +58,7 @@ DebCmd="find -L $SrcDir -type f -name '*.deb' -links 1"
 NewDeb=`eval $DebCmd | wc -l`
 
 #
-#   list ---------------------------------------------------------------
+#   list or ls ---------------------------------------------------------
 #
 if [ "$1" = 'list' -o "$1" = 'ls' ]; then
     test "$1" = 'list' && OptLnk='-links 2'

@@ -19,8 +19,9 @@ umask 002
 #   Startup checks
 #
 #   Note that error messages are NOT redirected to stderr !
-#   Most of the time, stderr in this script would be itself redirected
-#   to update.log, but we want to see the error messages on our tty
+#   Most of the time, stderr in this script would be redirected to
+#   'update.log' (actually some file in /var/log) by a calling script,
+#   but we want to see the error messages on our tty
 #
 #   Check package dependencies
 for binpkg in dpkg-scanpackages:dpkg-dev apt-ftparchive:apt-utils
@@ -160,6 +161,6 @@ done <$CfgDir/dists
 # Cleanup
 rm $TmpDir/relconf
 # If called for prod, save prod.list
-expr "$Type" : 'prod' >/dev/null && find -L $DebDir -type f -name '*.deb' | sed 's;.*/;;' >config/${Type}.list
+expr "$Type" : 'prod' >/dev/null && find -L $DebDir -type f -name '*.deb' | sed 's;.*/;;' >config/$Type.list
 # Add public key that APT clients will import with apt-key
 test -f $RepDir/key.gpg || ln $GpgDir/key.gpg $RepDir
