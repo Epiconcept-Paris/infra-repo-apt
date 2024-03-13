@@ -25,7 +25,7 @@ if [ $# -ge 1 ]; then
     exit 1
 fi
 
-DebVer=${DebVer:-stretch}
+DebVer=${DebVer:-bookworm}
 User=`id -un`
 AddUser="groupadd -g `id -g` `id -gn`; useradd -u `id -u` -g `id -g` $User"
 
@@ -55,11 +55,16 @@ if docker images | grep "$APTST_BASE *$DebVer" >/dev/null; then
     docker rmi $APTST_IMG >/dev/null
 fi
 
+echo "Removing the dangling build cache..."
+echo y | docker buildx prune | sed -r -e 's/(Total|ID)/y\n\1/' -e 's/true \t([0-9])/true \t\t\1/'
 mkdir -p $Logs $Share
 test -f $Share/cfg || ln ${TstTop}cfg share
+if [ "$http_proxy" -a "$https_proxy" ]; then
+    BldArgs="--build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy"
+fi
 echo "Building the '$APTST_IMG' image..."
 #   Variables come in order of their appearance in Dockerfile.in
-DEBVER="$DebVer" USER="$User" ADDUSER="$AddUser" envsubst '$DEBVER $USER $ADDUSER' <${TstTop}Dockerfile.in | tee $Logs/Dockerfile-$DebVer | docker build -f - -t $APTST_IMG . >$Logs/docker-$DebVer.out 2>&1
+DEBVER="$DebVer" USER="$User" ADDUSER="$AddUser" envsubst '$DEBVER $USER $ADDUSER' <${TstTop}Dockerfile.in | tee $Logs/Dockerfile-$DebVer | docker build -f - -t $APTST_IMG $BldArgs . >$Logs/docker-$DebVer.out 2>&1
 if [ $? -ne 0 ]; then
     echo "$Prg: docker build FAILED\a!" >&2
     exit 2
@@ -68,7 +73,10 @@ fi
 #
 #   Run the container
 #
-Cmd="docker run -ti -v `realpath $Share`:/opt/share --name $APTST_NAME --rm $APTST_IMG"
+if [ "$http_proxy" -a "$https_proxy" ]; then
+    Env="--env http_proxy=$http_proxy --env https_proxy=$https_proxy"
+fi
+Cmd="docker run -ti -v `realpath $Share`:/opt/share $Env --name $APTST_NAME --rm $APTST_IMG"
 echo "Use:\n    $Cmd\nto run the APT test container (or $Dir$Logs/run-$DebVer.sh)"
 echo "#!/bin/sh\n\nexec $Cmd" >$Logs/run-$DebVer.sh
 chmod +x $Logs/run-$DebVer.sh

@@ -2,8 +2,27 @@
 #	cfg - Configure APT test
 #	Called as . /opt/share/cfg from container's root/.bashrc
 #
-Dir=/opt/share
+debnum()
+{
+    local n
+
+    case $1 in
+	jessie)	    n=8;;
+	stretch)    n=9;;
+	buster)	    n=10;;
+	bullseye)   n=11;;
+	bookworm)   n=12;;
+	trixie)	    n=13;;
+	*)	    n=99;;
+    esac
+    echo $n
+}
+
+Dir='/opt/share'
 test -f $Dir/prod && Type='prod' || Type='prep'
+DebNum=$(debnum $DEBVER)
+test "$DebVer" = 'jessie' && Apt='apt-get' || Apt='apt'
+
 if [ -f $Dir/local ]; then
     Host='host.mydomain.tld'
     Repo="http://$Host/apt/$Type"
@@ -15,23 +34,31 @@ else
     Repo="https://$Host/$Type"
     echo "======= Configuring for $Host. Create an empty share/local file if not wanted. ======="
     echo "Installing extra packages for apt HTTPS ..."
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates apt-transport-https >$Dir/apt-get-$DEBVER.out
+    DEBIAN_FRONTEND=noninteractive $Apt install -y --no-install-recommends ca-certificates apt-transport-https >$Dir/$Apt-$DEBVER.out 2>/tmp/apt.err
 fi
 # On jessie, 'all' is not considered as a default architecture
 test "$DEBVER" = 'jessie' && Arch="[arch=`uname -r | sed 's/^.*-//'`,all] "
-Src='/etc/apt/sources.list.d/epiconcept.list'
-grep "$Host" $Src >/dev/null 2>&1 || echo "deb $Arch$Repo $DEBVER main" >>$Src
+test $DebNum -lt 11 && Key='/root/key.gpg' || Key='/etc/apt/trusted.gpg.d/epiconcept.asc'
+if [ $DebNum -lt 12 ]; then
+    Src='/etc/apt/sources.list.d/epiconcept.list'
+    grep "$Host" $Src >/dev/null 2>&1 || echo "deb $Arch$Repo $DEBVER main" >>$Src
+else
+    Src='/etc/apt/sources.list.d/epiconcept.sources'
+    echo "Types: deb
+URIs: $Repo
+Suites: $DEBVER
+Components: main
+Signed-By: $Key" >$Src
+fi
 
-echo "Fetching APT key from \"$Repo/key.gpg\" to /root ..."
-Key=/root/key.gpg
+echo "Fetching APT key from \"$Repo/key.gpg\" to $Key ..."
 curl -fsSL "$Repo/key.gpg" >$Key
-echo -n "Adding APT key: "
-apt-key add $Key
+test $DebNum -lt 11 && echo -n "Adding APT key: " && apt-key add $Key
 
-echo "Running apt-get update:"
-apt-get update
+echo "Running $Apt update:"
+$Apt update
 debinfo -a -s'|' >$Dir/pkgs0-$DEBVER
-chown $USER:$USER $Dir/apt-get-$DEBVER.out $Dir/pkgs0-$DEBVER
+chown $USER:$USER $Dir/$Apt-$DEBVER.out $Dir/pkgs0-$DEBVER
 
 echo -n -e "Use:
     apt-key list		# to list APT trusted keys

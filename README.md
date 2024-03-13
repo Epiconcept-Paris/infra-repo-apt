@@ -338,7 +338,7 @@ et avoir restauré les éléments (sauvegardés comme indiqué ci-dessus) sur le
 ```
 pour restaurer complètement les dépôts APT.
 
-### 4.3 Refection des dépôts APT (comme fsck pour les systèmes de fichier)
+### 4.3 Réfection des dépôts APT (comme fsck pour les systèmes de fichier)
 
 La fabrique de dépôts utilise des liens UNIX durs (et non symboliques) pour relier entre eux les fichiers de `sources/`, de `docroot/prep/debs/` et de `docroot/prod*/debs/`.
 Pour diverses raisons, il peut arriver que ces liens soient anormalement cassés.
@@ -357,17 +357,21 @@ done
 pour rétablir le fonctionnement normal.
 
 
-## 5 Image docker de test
+## 5 Image docker d'un client APT de test
 
-Ce dépôt git contient également un répertoire `test` permettant de créer une image docker sous Debian 'bookworm' de tests de la commande `apt`.
+Ce dépôt git contient également un répertoire `test` permettant de créer sous `docker` une image Debian `bookworm` (ou la version de Debian indiquée par la variable d'environnement **DebVer**) de tests de la commande `apt`.
 
-Pour créer l'image, lancer la commande `test/bake`, qui affiche à la fin la commande d'invocation du conteneur de l'image. Cette commande est également copiée dans `logs/run-${DebVer:-stretch}.sh`.
-Il est possible de créer une image docker sous une autre version de Debian par la variable d'environnement **DebVer**, par exemple : `DebVer=jessie test/bake` (attention, la validité de la version Debian n'est pas vérifiée, mais `test/bake` s'arrêtera en cas d'erreur de build de l'image docker).
-
-Le conteneur partage le répertoire `test/share`, vu en interne comme `/opt/share`, et lance automatiquement le script `test/cfg` par le biais d'un hardlink dans `test/share`.
-
-Ce script utilise par défaut les dépôts Epiconcept `https://apt.epiconcept.fr/prep (ou /prod)`, mais il est possible de tester le dépôt local de la façon suivante :
+Pour créer l'image, lancer la commande `test/bake`, qui affiche à la fin la commande d'invocation du conteneur de l'image. Cette commande est également copiée dans `logs/run-${DebVer:-bookworm}.sh`.
+Pour créer une image docker sous une autre version de Debian, il faut déclarer **DebVer** devant la commande `test/bake`, par exemple :
+```console
+DebVer=jessie test/bake
 ```
+Attention, la validité de la version Debian n'est pas vérifiée, mais `test/bake` s'arrêtera en cas d'erreur de build de l'image `docker`.
+
+Le conteneur partage le répertoire `test/share`, vu en interne comme `/opt/share`, et lance automatiquement le script `test/cfg`, présent dans `test/share` par le biais d'un hardlink.
+
+Ce script utilise par défaut les dépôts Epiconcept `https://apt.epiconcept.fr/prep` (ou `.../prod`), mais il est possible de tester un dépôt local à la machine `docker` de la façon suivante :
+```console
 dpkg -l apache2 >/dev/null || sudo apt-get install apache2
 sudo ln -s `realpath site/docroot` /var/www/html/apt
 >test/share/local
@@ -376,22 +380,43 @@ test/bake
 Enfin ce dépôt git contient aussi le script `test/bin/debinfo` qui n'est qu'une étude, un *proof of concept* pour la fabrique de dépôts APT.
 Il n'est utilisé que dans l'image de test pour lister les packages à la fin de `test/cfg`.
 
-## 6 Déploiement manuel
+## 6 Configuration d'une machine cliente (pour utliser nos dépôts)
 
-* Import de la clé (l'auth n'est pas nécessaire au sein de l'infra epiconcept)
-```console
-curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
-```
+* Import de la clé
+  * Pour les versions de Debian jusqu'à `buster` (Debian 10) incluse :
+    ```console
+    curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo apt-key add -
+    ```
+  * Pour les versions `bullseye` (Debian 11) et supérieures
+    ```console
+    curl -u username:password https://apt.epiconcept.fr/prep/key.gpg | sudo sh -c "cat >/etc/apt/trusted.gpg.d/epiconcept.asc"
+    ```
+L'authentification `-u username:passwd` n'est pas nécessaire au sein de l'infrastructure d'Epiconcept.
 
-* Configuration du repository dans /etc/apt/sources.list.d/epiconcept.list (prendre une seule ligne, en fonction de la version et de la distribution utilisée)
-```
-deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ <release-debian> main
-```
-ce qui peut se faire ainsi
-```
-echo "deb [arch=amd64,all] https://apt.epiconcept.fr/prep/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/epiconcept.list
-```
-Il faut (hors de notre infra) ajouter l'authentification (en Debian 9, il a fallu mettre dans /etc/apt/auth.conf pour que ça marche, il faut peut être inclure auth.conf.d ?)
+* Configuration du dépôt dans `/etc/apt/sources.list.d`  
+  Ci-après, `<repo>` désigne le nom du dépôt (`prep`, `prod` ou `prod-<tag`).
+  * Pour les versions jusqu'à Debian 11 incluse, dans `epiconcept.list` :
+    ```
+    deb [arch=amd64,all] https://apt.epiconcept.fr/<repo>/ <release-debian> main
+    ```
+    ce qui peut se faire avec la commande :
+    ```console
+    echo "deb [arch=amd64,all] https://apt.epiconcept.fr/<repo>/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/epiconcept.list
+    ```
+  * Pour les versions Debian 12 et supérieures, dans `epiconcept.sources` :
+    ```
+    Types: deb
+    URIs: https://apt.epiconcept.fr/<repo>
+    Suites: <release-debian>
+    Components: main
+    Signed-By: /etc/apt/trusted.gpg.d/epiconcept.asc
+    ```
+    ce qui peut se faire avec la commande `bash` :
+    ```console
+    echo -e "Types: deb\nURIs: <repo>\nSuites: <release-debian>\nComponents: main\nSigned-By: /etc/apt/trusted.gpg.d/epiconcept.asc" > /etc/apt/sources.list.d/epiconcept.sources
+    ```
+
+Hors de l'infrastructure d'Epiconcept, il faut également ajouter l'authentification avec la commande `bash` :
 ```
 echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
 ```
@@ -399,12 +424,13 @@ echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /et
 ## 7 Commande `apt`
 
 Le script apt est destiné à l'accès à distance aux scripts `prep.sh` et `prod.sh`.
+Il doit être copié dans un des répertoires de `PATH` sur la machine distante, d'où il sera exécuté.
 
 Il s'utilise avec comme premier argument `prep` ou `prod` selon le script que l'on veut utiliser.
 Le reste des arguments est directement passé au script concerné sur le serveur de dépôts.
 
 Exemples :
-```
+```console
 apt prep	# affichera le message d'utilisation
 apt prod	# de même
 
