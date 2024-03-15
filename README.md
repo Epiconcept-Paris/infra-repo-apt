@@ -154,7 +154,7 @@ Si le script genkey.sh semble alors se bloquer, c'est qu'il attend de "l'entropi
 Quand le script se termine, le répertoire contient trois clés :
 - une clé principale `master.gpg`, qu'il est impératif de sauvergarder et qu'il vaut mieux ensuite supprimer si elle est générée sur le serveur de dépôts lui-même
 - une sous-clé secrète `signing.gpg`, qui servira à la signature des fichiers `Release` des distributions dans les dépôts et qui doit être installée sur le serveur de dépôts APT par : `gpg --import signing.gpg`, en tant qu'utilisateur qui exécutera les scripts `prep.sh` et `prod.sh`
-- une clé publique `key.gpg` qui sera intégrée aux dépôts APT et installée sur les clients APT par : `apt-key add key.gpg` ou la copie directement dans `/etc/apt/trusted.gpg.d/` pour les dernières versions de `Debian` (voir la section 6).
+- une clé publique `key.gpg` qui sera intégrée aux dépôts APT et installée sur les clients APT par : `apt-key add key.gpg` ou par la copie directement dans `/etc/apt/trusted.gpg.d/` pour les dernières versions de `Debian` (voir la section 6).
 
 Sur le serveur de dépôts, après installation de `signing.gpg`, seuls les fichiers `key.conf` et `key.gpg` sont nécessaires dans le répertoire `gpg`.
 
@@ -384,7 +384,7 @@ Attention, la validité de la version de Debian n'est pas vérifiée, mais `test
 
 Le conteneur partage le répertoire `test/share`, vu en interne comme `/opt/share`, et lance automatiquement le script `test/cfg`, présent dans `test/share` par le biais d'un hardlink.
 
-Ce script utilise par défaut les dépôts Epiconcept `https://apt.epiconcept.fr/prep` (ou `.../prod`), mais il est possible de tester un dépôt local à la machine ou est installé `docker` de la façon suivante :
+Ce script utilise par défaut les dépôts Epiconcept `https://apt.epiconcept.fr/prep` (ou `.../prod`), mais il est possible de tester un dépôt local à la machine où est installé `docker` de la façon suivante :
 ```console
 dpkg -l apache2 >/dev/null || sudo apt-get install apache2
 sudo ln -s `realpath site/docroot` /var/www/html/apt
