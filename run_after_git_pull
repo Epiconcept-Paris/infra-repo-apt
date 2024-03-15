@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+#	run_after_git_pull - Correct own/mod when git repo does not belong to us
+#
+Prg=$(basename "$0")
+Cfg='.git/config'
+
+test -s $Cfg || { echo "No '$Cfg' in '$PWD' - nothing to do"; exit 0; }
+Usr=$(stat -c '%U' $Cfg)
+Own=$(id -un)
+#   We assume that the owner of $Cfg is the true owner of the git repo
+test "$Own" = "$Usr" && { echo "File '$Cfg' belongs to us - nothing to do"; exit 0; }
+
+NotUsr=$(find . ! -user $Usr | sed 's/^..//')
+NotGrp=$(find . ! -perm -g=w | sed 's/^..//')
+test "$NotUsr" -o "$NotGrp" || { echo "All files belong to $Usr and have g+w permission"; exit 0; }
+
+Nb=$(echo "$NotUsr" | wc -l)
+if [ $Nb -gt 0 ]; then
+    test $Nb -gt 1 && { s='s'; its='their'; } || { es='es'; t='s'; its='its'; }
+    echo "NOTE: $Nb file$s do$es not belong to $Usr and need$t $its ownership to be corrected"
+    echo "$NotUsr" | sudo xargs chown -v "$Usr:" | sed -u 's/^c/C/'
+    unset s es t its
+fi
+
+Nb=$(echo "$NotGrp" | wc -l)
+if [ $Nb -gt 0 ]; then
+    test $Nb -gt 1 && { s='s'; its='their'; } || { es='es'; t='s'; its='its'; }
+    echo "NOTE: $Nb file$s do$es not have g+w permission and need$t $its mode to be corrected"
+    echo "$NotGrp" | sudo xargs chmod -v ug+w | sed -u 's/^m/M/'
+fi
