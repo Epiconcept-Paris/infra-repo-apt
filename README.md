@@ -142,7 +142,7 @@ Avant la génération proprement dite (de préférence ailleurs que sur le serve
 **Il faut AU MINIMUM changer cette passphrase, du fait qu'elle est ici exposée publiquement**,
 avant de générer le jeu de clés, par exemple avec les commandes suivantes :
 
-```
+```console
 cd gpg
 vi key.conf
 ./genkey.sh
@@ -181,7 +181,7 @@ Cela peut se faire en créant dans `sources/` des liens symboliques vers différ
 Elle se fait par le script `prep.sh`. Quatre commandes sont disponibles :
 
 #### 1) Mise à jour du dépôt `prep` après la modification du répertoire `sources` :
-```
+```console
 ./prep.sh update
 ```
 * Le script `prep.sh` peuple d'abord le répertoire `docroot/prep/debs` (créé au besoin) :
@@ -247,26 +247,27 @@ Elle se fait par le script `prep.sh`. Quatre commandes sont disponibles :
 * Enfin, la commande `prep.sh update` supprime automatiquement des dépôts `prep` et `prod` les paquets qui auraient été supprimés de l'arborescence `sources/` depuis la dernière invocation de `prep.sh update`.
 
 #### 2) Liste des fichiers de pré-production pas encore en production :
-```
+```console
 ./prep.sh list
 ```
+
 #### 3a) Liste des différentes versions d'un paquet de pré-production :
-```
+```console
 ./prep.sh ver <nom-fichier-paquet>
 ```
 ou
-```
+```console
 ./prep.sh ver <nom-dpkg-paquet>
 ```
-Le *nom-dpkg* d'un paquet est le nom du paquet au sens de l'utilitaire `dpkg`, c'est à dire jusqu'au premier caractère '_'.
+Le *nom-dpkg* d'un paquet est le nom du paquet au sens de l'utilitaire `dpkg`, c'est à dire jusqu'au premier caractère `_`.
 
 #### 3b) Liste des *noms-dpkg* de paquets de pré-production comportant plus d'une version :
-```
+```console
 ./prep.sh ver
 ```
 
 #### 4) Liste des *noms-dpkg* de paquets de pré-production (en production ou non) :
-```
+```console
 ./prep.sh ls [ <filtre> ]
 ```
 L'argument optionnel <filtre> est une expression régulière étendue (de type `egrep`) permettant de ne sélectionner que les paquets de pré-production qui lui correspondent.
@@ -277,33 +278,33 @@ L'argument optionnel <filtre> est une expression régulière étendue (de type `
 Elle se fait par le script `prod.sh`. Quatre commandes sont également disponibles :
 
 #### 1) Ajout au dépôt `prod` de paquets du dépôt `prep` :
-```
+```console
 ./prod.sh add <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ```
 
 #### 2) Suppression de paquets du dépôt `prod` :
-```
+```console
 ./prod.sh del <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ```
 
 #### 3a) Liste des différentes versions d'un paquet de production :
-```
+```console
 ./prod.sh ver <nom-fichier-paquet>
 ```
 ou
-```
+```console
 ./prod.sh ver <nom-dpkg-paquet>
 ```
-Comme pour `prep.sh`, le *nom-dpkg* d'un paquet est le nom du paquet au sens de l'utilitaire `dpkg`, c'est à dire jusqu'au premier caractère '_'.
+Comme pour `prep.sh`, le *nom-dpkg* d'un paquet est le nom du paquet au sens de l'utilitaire `dpkg`, c'est à dire jusqu'au premier caractère `_`.
 
 #### 3b) Liste des *noms-dpkg* de paquets de production comportant plus d'une version :
-```
+```console
 ./prod.sh ver
 ```
 (de manière identique à `prep.sh ver ...`).
 
 #### 4) Liste des *noms-dpkg* de paquets de production :
-```
+```console
 ./prod.sh ls [ <filtre> ]
 ```
 (de manière identique à `prep.sh ls ...`).
@@ -312,17 +313,18 @@ Comme pour `prep.sh`, le *nom-dpkg* d'un paquet est le nom du paquet au sens de 
 
 La commande `prod.sh` accepte un argument `-t <tag>` optionnel.
 
-Si cet argument est utilisé, toutes les commandes de `prod.sh` s'appliquent à un dépôt `prod-<tag>' et non plus simplement `prod`.
+Si cet argument est utilisé, toutes les commandes de `prod.sh` s'appliquent à un dépôt `prod-<tag>` et non plus simplement `prod`.
+La liste des paquets de production est également sauvegardée dans `config/prod-<tag>.list` et non plus simplement `config/prod.list`.
 
 Exemples avec `<tag>` = `mdmdpi`
-```
+```console
 ./prod.sh -t mdmdpi add <nom-fichier-paquet> [ <nom-fichier-paquet> ... ]
 ./prod.sh -t mdmdpi ver <nom-dpkg-paquet>
 ```
 Si la variable d'environnement `APT_PROD_TAG` est déclarée, sa valeur remplit la même fonction que `-t <tag>`.
 
 Exemple:
-```
+```console
 export APT_PROD_TAG=mdmdpi
 ```
 Si la variable `APT_PROD_TAG` est déclarée et que le l'argument `-t <tag>` est utilisé, c'est ce dernier qui prévaut.
@@ -339,12 +341,12 @@ Le répertoire `gpg` a normalement été sauvegardé en entier après la génér
 ### 4.2 Restauration
 
 Après avoir installé la clé GPG de signature par :
-```
+```console
 gpg --import gpg/signing.gpg
 rm gpg/signing.gpg
 ```
 et avoir restauré les éléments (sauvegardés comme indiqué ci-dessus) sur le serveur désiré, il suffit d'exécuter :
-```
+```console
 ./prep.sh update
 ./prod.sh add `cat config/prod.list`
 ```
@@ -356,7 +358,7 @@ La fabrique de dépôts utilise des liens UNIX durs (et non symboliques) pour re
 Pour diverses raisons, il peut arriver que ces liens soient anormalement cassés.
 Les scripts de la fabrique ne fonctionneraient alors plus correctement.
 Mais la méthode utilisée pour la restauration s'applique. Il suffit de faire :
-```
+```console
 rm -r docroot
 ./prep.sh update
 for list in config/prod*.list
@@ -432,7 +434,7 @@ Il s'agit de la configuration nécessaire dans `/etc/apt` pour utliser les dép�
 
 * Configuration de l'accès au serveur de dépôts :
   Hors de l'infrastructure d'Epiconcept, il faut également ajouter l'authentification avec la commande `bash` :
-  ```
+  ```console
   echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
   ```
 
