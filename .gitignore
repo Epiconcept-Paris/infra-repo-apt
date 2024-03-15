@@ -1,10 +1,9 @@
 site/config/prod*.list
-site/sources
-site/docroot
 site/gpg/master.gpg
 site/gpg/signing.gpg
 site/gpg/key.gpg
-site/update.log
+site/sources
+site/docroot
 site/tmp
 test/share
 test/logs

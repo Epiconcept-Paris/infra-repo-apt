@@ -20,7 +20,7 @@ umask 002
 #
 #   Note that error messages are NOT redirected to stderr !
 #   Most of the time, stderr in this script would be redirected to
-#   'update.log' (actually some file in /var/log) by a calling script,
+#   the update log (usually found in /var/log) by the calling script,
 #   but we want to see the error messages on our tty
 #
 #   Check package dependencies

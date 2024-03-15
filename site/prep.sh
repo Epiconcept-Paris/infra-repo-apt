@@ -15,7 +15,7 @@ ProDir='prod'
 PrpDir="$DocDir/prep"
 DebDir="$PrpDir/debs"
 TmpDir='tmp'
-Log=/var/log/epiconcept/aptv2.preprod.log	# Aka 'update.log' in README.md
+Log=/var/log/epiconcept/aptv2.preprod.log	# Update log
 
 Usage()
 {

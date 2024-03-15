@@ -1,8 +1,8 @@
 ├── config
-│   ├── obsolete
-│   ├── component
+│   ├── relconf
 │   ├── dists
-│   └── relconf
+│   ├── component
+│   └── obsolete
 │
 ├── gpg
 │   ├── genkey.sh
@@ -224,6 +224,4 @@
 │
 ├── prep.sh
 ├── prod.sh
-├── update.sh
-│
-└── update.log
+└── update.sh
