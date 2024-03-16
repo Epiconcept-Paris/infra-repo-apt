@@ -432,8 +432,8 @@ Il s'agit de la configuration nécessaire dans `/etc/apt` pour utliser les dép�
     echo -e "Types: deb\nURIs: <repo>\nSuites: <release-debian>\nComponents: main\nSigned-By: /etc/apt/trusted.gpg.d/epiconcept.asc" > /etc/apt/sources.list.d/epiconcept.sources
     ```
 
-* Configuration de l'accès au serveur de dépôts :
-  Hors de l'infrastructure d'Epiconcept, il faut également ajouter l'authentification avec la commande `bash` :
+* Configuration de l'accès au serveur de dépôts  
+  Hors de l'infrastructure d'Epiconcept, il faut également ajouter l'authentification de la machine cliente avec la commande `bash` :
   ```console
   echo -e "machine apt.epiconcept.fr\nlogin <user>\npassword <mdp>" | sudo tee /etc/apt/auth.conf.d/apt.epiconcept.fr.conf
   ```
